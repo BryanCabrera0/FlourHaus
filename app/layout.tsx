@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
+import { CartProvider } from "./components/CartProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,10 +37,13 @@ export default function RootLayout({
             <div className="flex gap-6">
               <Link href="/menu" className="text-white hover:text-[#F0D9E8] transition-colors">Menu</Link>
               <Link href="/about" className="text-white hover:text-[#F0D9E8] transition-colors">About</Link>
+              <Link href="/cart" className="text-white hover:text-[#F0D9E8] transition-colors">Cart</Link>
             </div>
           </div>
         </nav>
-        {children}
+        <CartProvider>
+          {children}
+        </CartProvider>
       </body>
     </html>
   );
