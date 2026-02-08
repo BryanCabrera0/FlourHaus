@@ -1,7 +1,7 @@
 "use client";
 
 import { useCart } from "../components/CartProvider";
-import { useState } from "react";   
+import { useState } from "react";
 
 export default function CartPage() {
   const { items, removeFromCart, getTotal } = useCart();

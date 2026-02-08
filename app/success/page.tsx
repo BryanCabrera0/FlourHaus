@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-
 export default function SuccessPage() {
   return (
     <div className="min-h-screen p-8 max-w-5xl mx-auto">

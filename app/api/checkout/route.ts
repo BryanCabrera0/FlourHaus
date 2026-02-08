@@ -18,7 +18,10 @@ export async function POST(request: Request) {
       },
       quantity: item.quantity,
     })),
-    metadata: { fulfillment },
+    metadata: {
+      fulfillment,
+      items: JSON.stringify(items),
+    },
     mode: "payment",
     success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/success`,
     cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/cart`,

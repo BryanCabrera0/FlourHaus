@@ -17,3 +17,13 @@ model MenuItem{
   price       Float
   category    String
 }
+
+model Order {
+  id              Int      @id @default(autoincrement())
+  items           String
+  total           Float
+  fulfillment     String
+  stripeSessionId String
+  status          String   @default("new")
+  createdAt       DateTime @default(now())
+}
