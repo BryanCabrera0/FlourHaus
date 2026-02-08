@@ -1,3 +1,7 @@
+import Link from "next/link";
+
+
+
 function MenuItem({ name, price, description }: { name: string; price: number; description: string }) {
   return (
     <div className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition-shadow border border-[#F0D9E8]">
@@ -36,6 +40,14 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+      <div className="flex justify-center space-x-4 mt-6">
+        <Link href="/menu" className="bg-[#C8A2C8] hover:bg-[#B8A0B8] text-white font-bold py-2 px-4 rounded-full transition-colors duration-300">
+          View Full Menu
+        </Link>
+        <Link href="/about" className="bg-[#C8A2C8] hover:bg-[#B8A0B8] text-white font-bold py-2 px-4 rounded-full transition-colors duration-300">
+          Learn About Us
+        </Link>
+      </div>
 
       <footer className="text-center mt-16 text-sm text-[#B8A0B8]">
         <p>Homemade with love in Miami</p>
