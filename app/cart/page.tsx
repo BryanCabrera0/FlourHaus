@@ -102,7 +102,7 @@ export default function CartPage() {
             </div>
 
             <p className="text-sm font-medium mb-3 text-fh-muted">Fulfillment Method</p>
-            <div className="flex gap-3 mb-7 p-1.5 rounded-xl bg-[#eef8f3]">
+            <div className="toggle-track flex gap-3 mb-7 p-1.5 rounded-xl">
               <button
                 onClick={() => setFulfillment("pickup")}
                 className={`flex-1 py-2.5 font-semibold text-sm transition-all ${fulfillment === "pickup" ? "toggle-active" : "toggle-inactive"}`}

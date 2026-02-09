@@ -72,7 +72,7 @@ export default function OrderStatusControl({
         </button>
       </div>
       {error ? (
-        <p className="text-xs text-[#C06070]">{error}</p>
+        <p className="text-xs text-fh-danger">{error}</p>
       ) : null}
     </div>
   );

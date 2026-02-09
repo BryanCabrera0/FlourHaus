@@ -246,7 +246,7 @@ export default function AdminStripePanel() {
                 <p className="text-sm text-fh-muted">
                   Stripe Account:{" "}
                   <code
-                    className="px-1.5 py-0.5 rounded bg-[rgba(91,164,212,0.1)] text-fh-heading"
+                    className="px-1.5 py-0.5 rounded code-chip"
                   >
                     {status.account.id}
                   </code>
@@ -254,7 +254,7 @@ export default function AdminStripePanel() {
 
                 {status.account.requirementsDue.length > 0 ? (
                   <div
-                    className="text-sm p-3 rounded-lg text-[#8A5020] bg-[rgba(224,160,64,0.12)]"
+                    className="text-sm p-3 rounded-lg callout-warn"
                   >
                     <p className="font-semibold mb-1">Stripe still needs:</p>
                     <ul className="list-disc pl-5 space-y-1">
@@ -297,7 +297,7 @@ export default function AdminStripePanel() {
               </p>
             </div>
             <div className="card p-4">
-              <p className="kicker mb-2 text-[#40A8A0]">Pending Balance</p>
+              <p className="kicker kicker-blue mb-2">Pending Balance</p>
               <p className="text-2xl font-bold text-fh-heading">
                 {status.balances
                   ? formatMoney(status.balances.pending, status.balances.currency)
@@ -321,7 +321,7 @@ export default function AdminStripePanel() {
                 {status.payouts.map((payout) => (
                   <div
                     key={payout.id}
-                    className="border border-[#D5CCE5] rounded-lg px-3 py-2 flex flex-col gap-1 md:flex-row md:items-center md:justify-between"
+                    className="border surface-divider rounded-lg px-3 py-2 flex flex-col gap-1 md:flex-row md:items-center md:justify-between"
                   >
                     <div>
                       <p className="font-medium text-fh-heading">

@@ -19,7 +19,7 @@ function AddToCartButton({
   return (
     <button
       onClick={handleAddToCart}
-      className="mt-4 w-full btn-primary text-sm py-2.5 px-4"
+      className="mt-4 w-full btn-primary text-sm py-2.5 px-4 cursor-pointer"
     >
       Add to Cart
     </button>

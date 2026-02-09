@@ -206,12 +206,12 @@ function ImageUploadField({
           ) : (
             <div className="py-2">
               <svg
-                className="mx-auto mb-1"
+                className="mx-auto mb-1 text-fh-muted"
                 width="28"
                 height="28"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#A0A0B8"
+                stroke="currentColor"
                 strokeWidth="1.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -239,7 +239,7 @@ function ImageUploadField({
       )}
 
       {uploadError && (
-        <p className="text-xs mt-1 text-[#b85267]">
+        <p className="text-xs mt-1 text-fh-danger">
           {uploadError}
         </p>
       )}
@@ -923,7 +923,7 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
               transform: showCreateForm ? "rotate(180deg)" : "rotate(0deg)",
             }}
           >
-            &#9662;
+            ▾
           </span>
         </button>
 
@@ -1174,7 +1174,7 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                         toggleCategory(group.category);
                       }
                     }}
-                    className="w-full px-5 py-4 flex items-center justify-between text-left bg-[#fff2ea] border-b surface-divider"
+                    className="w-full px-5 py-4 flex items-center justify-between text-left bg-[rgba(255,204,225,0.22)] border-b surface-divider"
                   >
                     <div className="flex items-center gap-3">
                       <span
@@ -1233,10 +1233,10 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                                   <img
                                     src={item.imageUrl}
                                     alt={item.name}
-                                    className="w-14 h-14 rounded-lg object-cover flex-shrink-0 border-2 border-[#e3d8f1]"
+                                    className="w-14 h-14 rounded-lg object-cover flex-shrink-0 border-2 surface-divider"
                                   />
                                 ) : (
-                                  <div className="w-14 h-14 rounded-lg flex-shrink-0 flex items-center justify-center bg-[#f7f0ff] border-2 border-[#e3d8f1] text-fh-accent">
+                                  <div className="w-14 h-14 rounded-lg flex-shrink-0 flex items-center justify-center bg-[rgba(224,215,255,0.35)] border-2 surface-divider text-fh-accent">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                                       <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                                       <circle cx="8.5" cy="8.5" r="1.5" />
@@ -1261,12 +1261,12 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                                     ) : null}
                                     {item.isActive ? (
                                       <span className="status-active inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-[#4CAF7D]" />
+                                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--fh-accent-primary)]" />
                                         Active
                                       </span>
                                     ) : (
                                       <span className="status-archived inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-[#BAA0E6]" />
+                                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--fh-accent-primary)] opacity-60" />
                                         Archived
                                       </span>
                                     )}

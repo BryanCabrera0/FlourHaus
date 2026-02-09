@@ -35,7 +35,9 @@ export default async function MenuPage() {
         </div>
         {Object.entries(categories).map(([category, items]) => (
           <section key={category} className="mb-16">
-            <h2 className="text-2xl font-semibold mb-7 pb-3 text-fh-heading border-b-2 border-[#c8d9e8]">{category}</h2>
+            <h2 className="text-2xl font-semibold mb-7 pb-3 text-fh-heading border-b-2 surface-divider">
+              {category}
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
               {items.map((item) => (
                 <MenuItemCard key={item.id} item={item} />

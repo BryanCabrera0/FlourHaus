@@ -50,7 +50,7 @@ export default async function AdminDashboardPage() {
     <div className="space-y-8">
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <div className="stat-card stat-card-amber p-6">
-          <p className="kicker mb-2 text-[#C08A30]">Orders Today</p>
+          <p className="kicker kicker-accent mb-2">Orders Today</p>
           <p className="text-3xl font-bold text-fh-heading">{todaysOrders}</p>
         </div>
         <div className="stat-card stat-card-green p-6">
@@ -58,11 +58,13 @@ export default async function AdminDashboardPage() {
           <p className="text-3xl font-bold text-fh-heading">{openOrders}</p>
         </div>
         <div className="stat-card stat-card-teal p-6">
-          <p className="kicker mb-2 text-[#40A8A0]">Revenue Today</p>
-          <p className="text-3xl font-bold text-fh-heading">{formatCurrency(revenue)}</p>
+          <p className="kicker kicker-blue mb-2">Revenue Today</p>
+          <p className="text-3xl font-bold text-fh-heading">
+            {formatCurrency(revenue)}
+          </p>
         </div>
         <div className="stat-card stat-card-rose p-6">
-          <p className="kicker mb-2 text-[#D06080]">Active Menu Items</p>
+          <p className="kicker kicker-success mb-2">Active Menu Items</p>
           <p className="text-3xl font-bold text-fh-heading">
             {activeMenuItems}
             <span className="text-lg font-normal text-fh-muted">
@@ -91,7 +93,7 @@ export default async function AdminDashboardPage() {
               return (
                 <div
                   key={order.id}
-                  className="bg-[#FFFDFC] rounded-xl border border-[#D5CCE5] p-4 flex flex-col md:flex-row md:justify-between gap-3"
+                  className="surface-soft p-4 flex flex-col md:flex-row md:justify-between gap-3"
                 >
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -119,7 +121,6 @@ export default async function AdminDashboardPage() {
       </section>
 
       <AdminStripePanel />
-
     </div>
   );
 }

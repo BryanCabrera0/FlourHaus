@@ -146,7 +146,7 @@ export default async function AdminCustomOrdersPage({ searchParams }: CustomOrde
                 />
               </div>
 
-              <div className="border-t border-[#D5CCE5] px-5 py-4 space-y-3">
+              <div className="border-t surface-divider px-5 py-4 space-y-3">
                 <div>
                   <p className="kicker kicker-blue mb-1">Desired Items</p>
                   <p className="text-sm text-fh-body">{req.desiredItems}</p>
@@ -164,7 +164,7 @@ export default async function AdminCustomOrdersPage({ searchParams }: CustomOrde
                       {req.messages.map((message) => (
                         <div
                           key={message.id}
-                          className="bg-[#FFFDFC] rounded-xl border border-[#D5CCE5] p-4"
+                          className="surface-soft p-4"
                         >
                           <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-2">
                             <div>

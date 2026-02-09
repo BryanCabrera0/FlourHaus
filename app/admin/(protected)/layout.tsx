@@ -27,7 +27,7 @@ export default async function ProtectedAdminLayout({
           <nav className="flex items-center gap-2 flex-wrap">
             <AdminNav />
             <span
-              className="hidden sm:block w-px h-5 mx-1 bg-[rgba(155,114,207,0.15)]"
+              className="hidden sm:block w-px h-5 mx-1 divider-vert"
             />
             <Link
               href="/"

@@ -182,7 +182,7 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
                 ) : null}
 
                 {/* Items section */}
-                <div className="border-t border-[#D5CCE5] px-5 py-4 space-y-1">
+                <div className="border-t surface-divider px-5 py-4 space-y-1">
                   {items.length === 0 ? (
                     <p className="text-sm text-fh-muted">No line items captured.</p>
                   ) : (
@@ -203,7 +203,7 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
                 </div>
 
                 {/* Total */}
-                <div className="border-t border-[#D5CCE5] px-5 py-3 flex justify-end">
+                <div className="border-t surface-divider px-5 py-3 flex justify-end">
                   <p className="font-bold text-lg text-fh-accent-blue">{formatCurrency(order.total)}</p>
                 </div>
               </div>

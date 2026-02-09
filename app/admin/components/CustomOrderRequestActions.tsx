@@ -141,7 +141,7 @@ export default function CustomOrderRequestActions({
         </button>
       </div>
 
-      <div className="w-full md:w-[360px] bg-[#FFFDFC] rounded-xl border border-[#D5CCE5] p-4">
+      <div className="w-full md:w-[360px] surface-soft p-4">
         <p className="kicker kicker-accent mb-2">Message Customer</p>
         <p className="text-xs mb-3 text-fh-muted">
           To: <span className="font-semibold">{customerName}</span> ({customerEmail})
@@ -183,10 +183,10 @@ export default function CustomOrderRequestActions({
         </button>
 
         {error ? (
-          <p className="text-xs mt-3 text-[#C06070]">{error}</p>
+          <p className="text-xs mt-3 text-fh-danger">{error}</p>
         ) : null}
         {success ? (
-          <p className="text-xs mt-3 text-[#2D7A52]">{success}</p>
+          <p className="text-xs mt-3 text-fh-accent-blue">{success}</p>
         ) : null}
       </div>
     </div>
