@@ -26,3 +26,4 @@ export function getBaseUrl(request: Request): string {
     return "http://localhost:3000";
   }
 }
+

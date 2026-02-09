@@ -2,16 +2,9 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import prisma from "@/lib/prisma";
 import { FULFILLMENT_METHODS } from "@/lib/types";
+import { getStripeClient } from "@/lib/stripe";
 
 export const runtime = "nodejs";
-
-function getStripeClient(): Stripe | null {
-  const secretKey = process.env.STRIPE_SECRET_KEY?.trim();
-  if (!secretKey) {
-    return null;
-  }
-  return new Stripe(secretKey);
-}
 
 function parseFulfillment(value: string | undefined): "pickup" | "delivery" {
   if (value && FULFILLMENT_METHODS.includes(value as "pickup" | "delivery")) {

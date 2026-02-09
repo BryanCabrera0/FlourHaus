@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/adminApi";
-import { getStripeClient } from "@/lib/stripeAdmin";
+import { getStripeClient } from "@/lib/stripe";
 
 export const runtime = "nodejs";
 
