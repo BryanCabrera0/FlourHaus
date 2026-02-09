@@ -38,7 +38,7 @@ npx prisma migrate deploy
 npm run vercel-build
 ```
 
-This runs `prisma generate`, `prisma migrate deploy`, then `next build`.
+This runs Prisma generate/migrate with an automatic `P3005` baseline fallback, then `next build`.
 
 1. Import the GitHub repo into Vercel.
 2. Add these environment variables in Vercel (Preview + Production as needed):
@@ -54,12 +54,7 @@ This runs `prisma generate`, `prisma migrate deploy`, then `next build`.
 4. In Stripe, set webhook endpoint to:
    - `https://<your-domain>/api/webhook`
    - events: `checkout.session.completed`
-5. If your database already had tables before Prisma migrations, baseline it once:
-
-```bash
-npx prisma db execute --file prisma/migrations/20260209000100_admin_owner_features/migration.sql
-npx prisma migrate resolve --applied 20260209000100_admin_owner_features
-```
+5. If deployment still fails, open the Vercel build log and check the first Prisma error code.
 
 ## Getting Started
 
