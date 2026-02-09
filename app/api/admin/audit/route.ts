@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import prisma from "@/app/lib/prisma";
 import { requireAdminSession } from "@/lib/adminApi";
 
+export const runtime = "nodejs";
+
 export async function GET(request: NextRequest) {
   const auth = await requireAdminSession(request);
   if (!auth.ok) {

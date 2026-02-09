@@ -30,6 +30,37 @@ npx prisma migrate deploy
 - Admin audit logs (`AdminAuditLog` table and `/api/admin/audit`)
 - Stripe webhook idempotency by unique `stripeSessionId`
 
+## Deploy on Vercel
+
+`vercel.json` is configured to use:
+
+```bash
+npm run vercel-build
+```
+
+This runs `prisma generate`, `prisma migrate deploy`, then `next build`.
+
+1. Import the GitHub repo into Vercel.
+2. Add these environment variables in Vercel (Preview + Production as needed):
+   - `DATABASE_URL`
+   - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
+   - `STRIPE_SECRET_KEY`
+   - `STRIPE_WEBHOOK_SECRET`
+   - `ADMIN_EMAIL`
+   - `ADMIN_PASSWORD_HASH`
+   - `ADMIN_SESSION_SECRET`
+   - `NEXT_PUBLIC_BASE_URL` (optional; auto-detected from request origin if unset)
+3. Deploy.
+4. In Stripe, set webhook endpoint to:
+   - `https://<your-domain>/api/webhook`
+   - events: `checkout.session.completed`
+5. If your database already had tables before Prisma migrations, baseline it once:
+
+```bash
+npx prisma db execute --file prisma/migrations/20260209000100_admin_owner_features/migration.sql
+npx prisma migrate resolve --applied 20260209000100_admin_owner_features
+```
+
 ## Getting Started
 
 First, run the development server:
@@ -58,9 +89,3 @@ To learn more about Next.js, take a look at the following resources:
 - [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

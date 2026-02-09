@@ -9,6 +9,8 @@ import {
   isAdminAuthConfigured,
 } from "@/lib/adminAuth";
 
+export const runtime = "nodejs";
+
 type LoginRequest = {
   email?: unknown;
   password?: unknown;

@@ -4,6 +4,8 @@ import { ORDER_STATUSES, FULFILLMENT_METHODS } from "@/app/lib/types";
 import { parseOrderItems } from "@/lib/orderItems";
 import { requireAdminSession } from "@/lib/adminApi";
 
+export const runtime = "nodejs";
+
 function toOrderStatus(value: string | null) {
   if (!value) {
     return null;

@@ -1,3 +1,24 @@
+-- Bootstrap base tables for fresh databases.
+CREATE TABLE IF NOT EXISTS "MenuItem" (
+  "id" SERIAL NOT NULL,
+  "name" TEXT NOT NULL,
+  "description" TEXT NOT NULL,
+  "price" DOUBLE PRECISION NOT NULL,
+  "category" TEXT NOT NULL,
+  CONSTRAINT "MenuItem_pkey" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "Order" (
+  "id" SERIAL NOT NULL,
+  "items" TEXT NOT NULL,
+  "total" DOUBLE PRECISION NOT NULL,
+  "fulfillment" TEXT NOT NULL DEFAULT 'pickup',
+  "stripeSessionId" TEXT NOT NULL,
+  "status" TEXT NOT NULL DEFAULT 'new',
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "Order_pkey" PRIMARY KEY ("id")
+);
+
 -- Create fulfillment and status enums.
 DO $$
 BEGIN

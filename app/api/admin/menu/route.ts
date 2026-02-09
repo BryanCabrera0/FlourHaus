@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import prisma from "@/app/lib/prisma";
 import { requireAdminSession } from "@/lib/adminApi";
 
+export const runtime = "nodejs";
+
 type CreateMenuItemBody = {
   name?: unknown;
   description?: unknown;

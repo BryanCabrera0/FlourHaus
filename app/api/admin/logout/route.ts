@@ -2,6 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { ADMIN_SESSION_COOKIE_NAME } from "@/lib/adminSession";
 import { getAdminSessionFromRequest } from "@/lib/adminAuth";
 
+export const runtime = "nodejs";
+
 export async function POST(request: NextRequest) {
   const session = await getAdminSessionFromRequest(request);
   if (!session) {

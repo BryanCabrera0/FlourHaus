@@ -3,7 +3,15 @@ import Stripe from "stripe";
 import prisma from "../../lib/prisma";
 import { FULFILLMENT_METHODS } from "../../lib/types";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+export const runtime = "nodejs";
+
+function getStripeClient(): Stripe | null {
+  const secretKey = process.env.STRIPE_SECRET_KEY?.trim();
+  if (!secretKey) {
+    return null;
+  }
+  return new Stripe(secretKey);
+}
 
 function parseFulfillment(value: string | undefined): "pickup" | "delivery" {
   if (value && FULFILLMENT_METHODS.includes(value as "pickup" | "delivery")) {
@@ -15,9 +23,18 @@ function parseFulfillment(value: string | undefined): "pickup" | "delivery" {
 export async function POST(request: Request) {
   const body = await request.text();
   const signature = request.headers.get("stripe-signature");
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!signature || !webhookSecret) {
-    return NextResponse.json({ error: "Missing webhook signature configuration" }, { status: 400 });
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
+  const stripe = getStripeClient();
+
+  if (!webhookSecret || !stripe) {
+    return NextResponse.json(
+      { error: "Server misconfiguration: missing STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET" },
+      { status: 500 }
+    );
+  }
+
+  if (!signature) {
+    return NextResponse.json({ error: "Missing webhook signature" }, { status: 400 });
   }
 
   let event: Stripe.Event;

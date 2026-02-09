@@ -2,13 +2,38 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import type { CartItem, FulfillmentMethod } from "../../lib/types";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+export const runtime = "nodejs";
 
 type CheckoutRequestBody = {
   items: CartItem[];
   fulfillment: FulfillmentMethod;
   notes?: string;
 };
+
+function getStripeClient(): Stripe | null {
+  const secretKey = process.env.STRIPE_SECRET_KEY?.trim();
+  if (!secretKey) {
+    return null;
+  }
+  return new Stripe(secretKey);
+}
+
+function getBaseUrl(request: Request): string {
+  const configuredBaseUrl = process.env.NEXT_PUBLIC_BASE_URL?.trim();
+  if (configuredBaseUrl) {
+    try {
+      return new URL(configuredBaseUrl).origin;
+    } catch {
+      // Fall through to request origin.
+    }
+  }
+
+  try {
+    return new URL(request.url).origin;
+  } catch {
+    return "http://localhost:3000";
+  }
+}
 
 function isFulfillmentMethod(value: unknown): value is FulfillmentMethod {
   return value === "pickup" || value === "delivery";
@@ -66,6 +91,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid checkout payload" }, { status: 400 });
   }
 
+  const stripe = getStripeClient();
+  if (!stripe) {
+    return NextResponse.json({ error: "Server misconfiguration: missing STRIPE_SECRET_KEY" }, { status: 500 });
+  }
+
+  const baseUrl = getBaseUrl(request);
+
   try {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -86,8 +118,8 @@ export async function POST(request: Request) {
       },
       phone_number_collection: { enabled: true },
       mode: "payment",
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/cart`,
+      success_url: new URL("/success", baseUrl).toString(),
+      cancel_url: new URL("/cart", baseUrl).toString(),
     });
 
     if (!session.url) {

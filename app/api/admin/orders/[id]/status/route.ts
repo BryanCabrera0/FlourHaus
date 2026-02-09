@@ -3,6 +3,8 @@ import prisma from "@/app/lib/prisma";
 import { ORDER_STATUSES } from "@/app/lib/types";
 import { requireAdminSession } from "@/lib/adminApi";
 
+export const runtime = "nodejs";
+
 type StatusUpdateRequest = {
   status?: unknown;
 };
