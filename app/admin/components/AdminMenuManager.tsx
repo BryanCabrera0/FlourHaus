@@ -193,7 +193,7 @@ function ImageUploadField({
           {uploading ? (
             <div className="py-2">
               <div className="upload-progress-bar w-full mx-auto" style={{ maxWidth: 200 }} />
-              <p className="text-xs mt-2" style={{ color: "#5E5485" }}>
+              <p className="text-xs mt-2 text-fh-muted">
                 Uploading...
               </p>
             </div>
@@ -214,10 +214,10 @@ function ImageUploadField({
                 <polyline points="17 8 12 3 7 8" />
                 <line x1="12" y1="3" x2="12" y2="15" />
               </svg>
-              <p className="text-xs" style={{ color: "#5E5485" }}>
+              <p className="text-xs text-fh-muted">
                 Drop an image or click to browse
               </p>
-              <p className="text-xs mt-0.5" style={{ color: "#6E6395" }}>
+              <p className="text-xs mt-0.5 text-fh-muted">
                 JPEG, PNG, WebP, GIF &middot; Max 5 MB
               </p>
             </div>
@@ -233,7 +233,7 @@ function ImageUploadField({
       )}
 
       {uploadError && (
-        <p className="text-xs mt-1" style={{ color: "#C06070" }}>
+        <p className="text-xs mt-1 text-[#b85267]">
           {uploadError}
         </p>
       )}
@@ -245,8 +245,7 @@ function ImageUploadField({
           <img
             src={value}
             alt="Preview"
-            className="h-16 rounded-lg object-cover"
-            style={{ border: "1px solid rgba(91, 164, 212, 0.15)" }}
+            className="h-16 rounded-lg object-cover border surface-divider"
           />
           <button
             type="button"
@@ -281,12 +280,38 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
   const [isCreating, setIsCreating] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [busyIds, setBusyIds] = useState<Record<number, boolean>>({});
+  const [searchTerm, setSearchTerm] = useState("");
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
+  const [editingItemId, setEditingItemId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
   const hasItems = items.length > 0;
   const menuItems = useMemo(() => sortItems(items), [items]);
   const grouped = useMemo(() => groupByCategory(menuItems), [menuItems]);
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const isFiltering = normalizedSearch.length > 0;
+
+  const visibleGroups = useMemo(() => {
+    if (!normalizedSearch) {
+      return grouped;
+    }
+
+    return grouped
+      .map((group) => ({
+        category: group.category,
+        items: group.items.filter((item) => {
+          const haystack = `${item.name} ${item.description} ${item.category}`.toLowerCase();
+          return haystack.includes(normalizedSearch);
+        }),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [grouped, normalizedSearch]);
+
+  const totalVisibleItems = useMemo(
+    () => visibleGroups.reduce((sum, group) => sum + group.items.length, 0),
+    [visibleGroups],
+  );
 
   function setDraftValue(id: number, field: keyof MenuDraft, value: string | boolean) {
     setDrafts((prev) => ({
@@ -300,6 +325,31 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
 
   function setBusy(id: number, value: boolean) {
     setBusyIds((prev) => ({ ...prev, [id]: value }));
+  }
+
+  function toggleCategory(category: string) {
+    setExpandedCategories((prev) => ({ ...prev, [category]: !prev[category] }));
+  }
+
+  function expandAllVisibleCategories() {
+    setExpandedCategories((prev) => {
+      const next = { ...prev };
+      for (const group of visibleGroups) {
+        next[group.category] = true;
+      }
+      return next;
+    });
+  }
+
+  function collapseAllVisibleCategories() {
+    setExpandedCategories((prev) => {
+      const next = { ...prev };
+      for (const group of visibleGroups) {
+        next[group.category] = false;
+      }
+      return next;
+    });
+    setEditingItemId(null);
   }
 
   async function handleCreate() {
@@ -355,6 +405,7 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
       });
       setMessage(`Created "${created.name}".`);
       setShowCreateForm(false);
+      setExpandedCategories((prev) => ({ ...prev, [created.category]: true }));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create menu item.");
     } finally {
@@ -407,6 +458,7 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
       );
       setDrafts((prev) => ({ ...prev, [id]: toDraft(payload.menuItem!) }));
       setMessage(`Saved "${payload.menuItem.name}".`);
+      setExpandedCategories((prev) => ({ ...prev, [payload.menuItem!.category]: true }));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update menu item.");
     } finally {
@@ -480,6 +532,7 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
         delete next[id];
         return next;
       });
+      setEditingItemId((prev) => (prev === id ? null : prev));
       setMessage(`Deleted "${item.name}".`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete menu item.");
@@ -488,33 +541,26 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
     }
   }
 
-  /* running index for stagger delay */
-  let cardIndex = 0;
-
   return (
-    <div className="space-y-6 relative z-10">
+    <div className="space-y-6">
       {/* ── Collapsible Add Menu Item (CSS accordion) ── */}
-      <div className="panel menu-add-panel panel-hover-glow animate-card-enter overflow-hidden">
+      <div className="panel menu-add-panel overflow-hidden">
         <button
           type="button"
           onClick={() => setShowCreateForm((prev) => !prev)}
           className="w-full p-5 flex items-center justify-between text-left"
         >
           <div className="flex items-center gap-3">
-            <span
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-lg font-bold"
-              style={{ background: "#BAA0E6" }}
-            >
+            <span className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-lg font-bold bg-[var(--fh-accent-primary)]">
               +
             </span>
-            <h2 className="text-xl font-bold" style={{ color: "#40375F" }}>
+            <h2 className="text-xl font-bold text-fh-heading">
               Add Menu Item
             </h2>
           </div>
           <span
-            className="text-lg transition-transform duration-300"
+            className="text-lg transition-transform duration-300 text-fh-accent"
             style={{
-              color: "#BAA0E6",
               transform: showCreateForm ? "rotate(180deg)" : "rotate(0deg)",
             }}
           >
@@ -524,7 +570,7 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
 
         <div className={`accordion-content ${showCreateForm ? "open" : ""}`}>
           <div className="accordion-inner">
-            <div className="px-5 pb-5 pt-5" style={{ borderTop: "1px solid rgba(186, 156, 230, 0.15)" }}>
+            <div className="px-5 pb-5 pt-5 border-t surface-divider">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="admin-label">Name</label>
@@ -573,15 +619,14 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                   <textarea
                     value={createForm.description}
                     onChange={(event) => setCreateForm((prev) => ({ ...prev, description: event.target.value }))}
-                    className="admin-input"
-                    style={{ resize: "vertical" }}
+                    className="admin-input resize-y"
                     rows={3}
                     placeholder="Describe this item..."
                   />
                 </div>
               </div>
               <div className="mt-4 flex items-center justify-between gap-4 flex-wrap">
-                <label className="text-sm flex items-center gap-2" style={{ color: "#6B5D79" }}>
+                <label className="text-sm flex items-center gap-2 text-fh-muted">
                   <input
                     type="checkbox"
                     checked={createForm.isActive}
@@ -595,7 +640,7 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                   type="button"
                   onClick={handleCreate}
                   disabled={isCreating}
-                  className="btn-pastel-primary py-2.5 px-5 text-sm disabled:opacity-50"
+                  className="btn-primary py-2.5 px-5 text-sm disabled:opacity-50"
                 >
                   {isCreating ? "Creating..." : "Create Item"}
                 </button>
@@ -619,187 +664,279 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
 
       {/* ── Menu items grouped by category ── */}
       {!hasItems ? (
-        <div className="panel panel-hover-glow p-6 animate-card-enter">
-          <p style={{ color: "#6B5D79" }}>No menu items yet.</p>
+        <div className="panel p-6">
+          <p className="text-fh-muted">No menu items yet.</p>
         </div>
       ) : (
-        grouped.map((group) => (
-          <div key={group.category} className="space-y-4">
-            {/* Category header */}
-            <div className="category-bar flex items-center gap-3">
-              <h3 className="category-underline text-sm font-semibold uppercase tracking-wider" style={{ color: "#6B5B95" }}>
-                {group.category}
-              </h3>
-              <div className="flex-1" />
-              <span
-                className="accent-lavender text-xs font-semibold px-2.5 py-0.5 rounded-full"
-              >
-                {group.items.length} item{group.items.length === 1 ? "" : "s"}
-              </span>
-            </div>
-
-            {group.items.map((item) => {
-              const draft = drafts[item.id] ?? toDraft(item);
-              const busy = !!busyIds[item.id];
-              const delay = cardIndex * 0.07;
-              cardIndex++;
-              return (
-                <div
-                  key={item.id}
-                  className={`panel menu-item-card panel-hover-glow animate-card-enter p-0 overflow-hidden ${!item.isActive ? "item-archived" : ""}`}
-                  style={{ animationDelay: `${delay}s` }}
+        <>
+          <div className="panel p-5">
+            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div className="flex-1">
+                <label className="admin-label">Find Menu Items</label>
+                <input
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  className="admin-input"
+                  placeholder="Search by name, description, or category"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={expandAllVisibleCategories}
+                  className="btn-admin-nav text-xs py-2 px-3"
                 >
-                  {/* Item header */}
-	                  <div className="p-5 flex justify-between items-start gap-4 flex-wrap">
-	                    <div className="flex gap-4 items-start">
-	                      {/* Image thumbnail */}
-	                      {item.imageUrl ? (
-	                        // eslint-disable-next-line @next/next/no-img-element
-	                        <img
-	                          src={item.imageUrl}
-	                          alt={item.name}
-	                          className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
-	                          style={{ border: "2px solid rgba(186,156,230,0.15)" }}
-	                        />
-	                      ) : (
-                        <div
-                          className="w-14 h-14 rounded-lg flex-shrink-0 flex items-center justify-center"
-                          style={{ background: "rgba(186,156,230,0.08)", border: "2px solid rgba(186,156,230,0.12)" }}
-                        >
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#BAA0E6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                            <circle cx="8.5" cy="8.5" r="1.5" />
-                            <path d="m21 15-5-5L5 21" />
-                          </svg>
-                        </div>
-                      )}
-                      <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-semibold" style={{ color: "#40375F" }}>
-                            {item.name}
-                          </p>
-                          <span className="text-xs font-medium accent-sky px-1.5 py-0.5 rounded" style={{ fontSize: "0.65rem" }}>
-                            #{item.id}
-                          </span>
-                          {item.isActive ? (
-                            <span className="status-active inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                              <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#4CAF7D" }} />
-                              Active
-                            </span>
-                          ) : (
-                            <span className="status-archived inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                              <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#BAA0E6" }} />
-                              Archived
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm mt-0.5" style={{ color: "#6B5D79" }}>
-                          {formatCurrency(item.price)} &middot; display order {item.sortOrder}
-                        </p>
-                        <p className="text-xs mt-0.5" style={{ color: "#6E6395" }}>
-                          Updated {new Date(item.updatedAt).toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 flex-wrap">
-                      <button
-                        type="button"
-                        onClick={() => handleToggleActive(item.id)}
-                        disabled={busy}
-                        className="btn-admin-nav text-xs py-2 px-3 disabled:opacity-50"
-                      >
-                        {draft.isActive ? "Archive" : "Activate"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(item.id)}
-                        disabled={busy}
-                        className="btn-remove text-xs py-2 px-3 disabled:opacity-50"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Edit fields */}
-                  <div className="menu-edit-section px-5 py-5">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="admin-label">Name</label>
-                        <input
-                          value={draft.name}
-                          onChange={(event) => setDraftValue(item.id, "name", event.target.value)}
-                          className="admin-input"
-                        />
-                      </div>
-                      <div>
-                        <label className="admin-label">Category</label>
-                        <input
-                          value={draft.category}
-                          onChange={(event) => setDraftValue(item.id, "category", event.target.value)}
-                          className="admin-input"
-                        />
-                      </div>
-                      <div>
-                        <label className="admin-label">Price</label>
-                        <input
-                          value={draft.price}
-                          onChange={(event) => setDraftValue(item.id, "price", event.target.value)}
-                          className="admin-input"
-                        />
-                      </div>
-                      <div>
-                        <label className="admin-label">Display Order</label>
-                        <input
-                          value={draft.sortOrder}
-                          onChange={(event) => setDraftValue(item.id, "sortOrder", event.target.value)}
-                          className="admin-input"
-                        />
-                      </div>
-                      <div className="md:col-span-2">
-                        <ImageUploadField
-                          value={draft.imageUrl}
-                          onChange={(url) => setDraftValue(item.id, "imageUrl", url)}
-                        />
-                      </div>
-                      <div className="md:col-span-2">
-                        <label className="admin-label">Description</label>
-                        <textarea
-                          value={draft.description}
-                          onChange={(event) =>
-                            setDraftValue(item.id, "description", event.target.value)
-                          }
-                          className="admin-input"
-                          style={{ resize: "vertical" }}
-                          rows={3}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="mt-4 flex justify-between items-center gap-4 flex-wrap">
-                      <label className="text-sm flex items-center gap-2" style={{ color: "#6B5D79" }}>
-                        <input
-                          type="checkbox"
-                          checked={draft.isActive}
-                          onChange={(event) => setDraftValue(item.id, "isActive", event.target.checked)}
-                        />
-                        Item is active
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => handleSave(item.id)}
-                        disabled={busy}
-                        className="btn-pastel-primary py-2.5 px-5 text-sm disabled:opacity-50"
-                      >
-                        {busy ? "Saving..." : "Save Changes"}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                  Expand All
+                </button>
+                <button
+                  type="button"
+                  onClick={collapseAllVisibleCategories}
+                  className="btn-admin-nav text-xs py-2 px-3"
+                >
+                  Collapse All
+                </button>
+              </div>
+            </div>
+            <p className="text-xs text-fh-muted mt-3">
+              Showing {totalVisibleItems} item{totalVisibleItems === 1 ? "" : "s"} across{" "}
+              {visibleGroups.length} categor{visibleGroups.length === 1 ? "y" : "ies"}
+              {isFiltering ? ` matching "${searchTerm.trim()}".` : "."}
+            </p>
           </div>
-        ))
+
+          {visibleGroups.length === 0 ? (
+            <div className="panel p-6">
+              <p className="text-fh-muted">No items match your search.</p>
+            </div>
+          ) : (
+            visibleGroups.map((group) => {
+              const categoryOpen = isFiltering || !!expandedCategories[group.category];
+
+              return (
+                <section key={group.category} className="panel overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!isFiltering) {
+                        toggleCategory(group.category);
+                      }
+                    }}
+                    className="w-full px-5 py-4 flex items-center justify-between text-left bg-[#fff2ea] border-b surface-divider"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`text-sm text-fh-accent transition-transform ${
+                          categoryOpen ? "rotate-90" : ""
+                        }`}
+                        aria-hidden="true"
+                      >
+                        ▶
+                      </span>
+                      <h3 className="text-sm font-semibold uppercase tracking-wider text-fh-accent">
+                        {group.category}
+                      </h3>
+                      <span className="accent-lavender text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                        {group.items.length} item{group.items.length === 1 ? "" : "s"}
+                      </span>
+                    </div>
+                    <span className="text-xs text-fh-muted">
+                      {isFiltering ? "Auto-expanded while searching" : categoryOpen ? "Hide" : "Show"}
+                    </span>
+                  </button>
+
+                  {categoryOpen ? (
+                    <div className="px-5 pb-2">
+                      {group.items.map((item, index) => {
+                        const draft = drafts[item.id] ?? toDraft(item);
+                        const busy = !!busyIds[item.id];
+                        const isEditing = editingItemId === item.id;
+                        const descriptionPreview =
+                          item.description.length > 120
+                            ? `${item.description.slice(0, 120)}...`
+                            : item.description;
+
+                        return (
+                          <article
+                            key={item.id}
+                            className={`py-4 ${index > 0 ? "border-t surface-divider" : ""} ${
+                              !item.isActive ? "item-archived" : ""
+                            }`}
+                          >
+                            <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                              <div className="flex gap-4 items-start">
+                                {item.imageUrl ? (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img
+                                    src={item.imageUrl}
+                                    alt={item.name}
+                                    className="w-14 h-14 rounded-lg object-cover flex-shrink-0 border-2 border-[#e3d8f1]"
+                                  />
+                                ) : (
+                                  <div className="w-14 h-14 rounded-lg flex-shrink-0 flex items-center justify-center bg-[#f7f0ff] border-2 border-[#e3d8f1] text-fh-accent">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                      <circle cx="8.5" cy="8.5" r="1.5" />
+                                      <path d="m21 15-5-5L5 21" />
+                                    </svg>
+                                  </div>
+                                )}
+
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <p className="font-semibold text-fh-heading">{item.name}</p>
+                                    <span className="text-[0.65rem] font-medium accent-sky px-1.5 py-0.5 rounded">
+                                      #{item.id}
+                                    </span>
+                                    <span className="price-pill text-xs font-semibold px-2 py-0.5 rounded-full">
+                                      {formatCurrency(item.price)}
+                                    </span>
+                                    {item.isActive ? (
+                                      <span className="status-active inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-[#4CAF7D]" />
+                                        Active
+                                      </span>
+                                    ) : (
+                                      <span className="status-archived inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-[#BAA0E6]" />
+                                        Archived
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-sm text-fh-muted">{descriptionPreview}</p>
+                                  <p className="text-xs text-fh-muted">
+                                    Display order {item.sortOrder} &middot; Updated{" "}
+                                    {new Date(item.updatedAt).toLocaleString()}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="flex gap-2 flex-wrap">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setEditingItemId((prev) =>
+                                      prev === item.id ? null : item.id,
+                                    )
+                                  }
+                                  className={`${
+                                    isEditing ? "btn-admin-nav-active" : "btn-admin-nav"
+                                  } text-xs py-2 px-3`}
+                                >
+                                  {isEditing ? "Close" : "Edit"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleActive(item.id)}
+                                  disabled={busy}
+                                  className="btn-admin-nav text-xs py-2 px-3 disabled:opacity-50"
+                                >
+                                  {draft.isActive ? "Archive" : "Activate"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDelete(item.id)}
+                                  disabled={busy}
+                                  className="btn-remove text-xs py-2 px-3 disabled:opacity-50"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+
+                            {isEditing ? (
+                              <div className="menu-edit-section mt-4 rounded-xl p-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div>
+                                    <label className="admin-label">Name</label>
+                                    <input
+                                      value={draft.name}
+                                      onChange={(event) =>
+                                        setDraftValue(item.id, "name", event.target.value)
+                                      }
+                                      className="admin-input"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="admin-label">Category</label>
+                                    <input
+                                      value={draft.category}
+                                      onChange={(event) =>
+                                        setDraftValue(item.id, "category", event.target.value)
+                                      }
+                                      className="admin-input"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="admin-label">Price</label>
+                                    <input
+                                      value={draft.price}
+                                      onChange={(event) =>
+                                        setDraftValue(item.id, "price", event.target.value)
+                                      }
+                                      className="admin-input"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="admin-label">Display Order</label>
+                                    <input
+                                      value={draft.sortOrder}
+                                      onChange={(event) =>
+                                        setDraftValue(item.id, "sortOrder", event.target.value)
+                                      }
+                                      className="admin-input"
+                                    />
+                                  </div>
+                                  <div className="md:col-span-2">
+                                    <ImageUploadField
+                                      value={draft.imageUrl}
+                                      onChange={(url) => setDraftValue(item.id, "imageUrl", url)}
+                                    />
+                                  </div>
+                                  <div className="md:col-span-2">
+                                    <label className="admin-label">Description</label>
+                                    <textarea
+                                      value={draft.description}
+                                      onChange={(event) =>
+                                        setDraftValue(item.id, "description", event.target.value)
+                                      }
+                                      className="admin-input resize-y"
+                                      rows={3}
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="mt-4 flex justify-between items-center gap-4 flex-wrap">
+                                  <label className="text-sm flex items-center gap-2 text-fh-muted">
+                                    <input
+                                      type="checkbox"
+                                      checked={draft.isActive}
+                                      onChange={(event) =>
+                                        setDraftValue(item.id, "isActive", event.target.checked)
+                                      }
+                                    />
+                                    Item is active
+                                  </label>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSave(item.id)}
+                                    disabled={busy}
+                                    className="btn-primary py-2.5 px-5 text-sm disabled:opacity-50"
+                                  >
+                                    {busy ? "Saving..." : "Save Changes"}
+                                  </button>
+                                </div>
+                              </div>
+                            ) : null}
+                          </article>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+                </section>
+              );
+            })
+          )}
+        </>
       )}
     </div>
   );

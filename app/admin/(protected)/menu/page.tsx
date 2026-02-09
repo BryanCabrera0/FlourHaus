@@ -10,12 +10,11 @@ export default async function AdminMenuPage() {
 
   return (
     <div className="space-y-5">
-      <div className="admin-mesh-bg" aria-hidden="true" />
-      <div className="panel menu-header-panel panel-hover-glow animate-card-enter p-6 relative z-10">
-        <h1 className="text-3xl font-bold mb-2" style={{ color: "#40375F" }}>
+      <div className="panel menu-header-panel p-6">
+        <h1 className="text-3xl font-bold mb-2 text-fh-heading">
           Menu Manager
         </h1>
-        <p style={{ color: "#6B5D79" }}>
+        <p className="text-fh-muted">
           Create, update, archive, and sort items shown on the storefront.
         </p>
       </div>

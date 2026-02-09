@@ -539,49 +539,6 @@
    Animations & Premium Effects
    ══════════════════════════════════════════════ */
 
-/* ── Fluid mesh background ────────────────── */
-.admin-mesh-bg {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-.admin-mesh-bg::before,
-.admin-mesh-bg::after {
-  content: "";
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(90px);
-}
-.admin-mesh-bg::before {
-  width: 700px;
-  height: 700px;
-  background: rgba(186, 156, 230, 0.35);
-  top: -15%;
-  left: -10%;
-  animation: meshFloat1 18s ease-in-out infinite alternate;
-}
-.admin-mesh-bg::after {
-  width: 600px;
-  height: 600px;
-  background: rgba(140, 215, 180, 0.3);
-  bottom: -10%;
-  right: -8%;
-  animation: meshFloat2 22s ease-in-out infinite alternate;
-}
-
-@keyframes meshFloat1 {
-  0%   { transform: translate(0, 0) scale(1); }
-  50%  { transform: translate(80px, 60px) scale(1.15); }
-  100% { transform: translate(-40px, 100px) scale(0.95); }
-}
-@keyframes meshFloat2 {
-  0%   { transform: translate(0, 0) scale(1); }
-  50%  { transform: translate(-70px, -50px) scale(1.1); }
-  100% { transform: translate(50px, -80px) scale(0.9); }
-}
-
 /* ── Card entrance animation ──────────────── */
 @keyframes fadeSlideUp {
   from {
@@ -610,37 +567,38 @@
 
 /* ── Menu header panel ────────────────────── */
 .menu-header-panel {
-  background: #fffdfb;
-  border-top: 1px solid rgba(167, 139, 219, 0.18);
+  background: linear-gradient(180deg, #fffdfb 0%, #fff8f4 100%);
+  border-top: 1px solid var(--fh-border);
 }
 
 /* ── Add-form panel ───────────────────────── */
 .menu-add-panel {
-  background: #fffdfb;
-  border-top: 1px solid rgba(167, 139, 219, 0.18);
+  background: linear-gradient(180deg, #fffdfb 0%, #fff8f4 100%);
+  border-top: 1px solid var(--fh-border);
 }
 
 /* ── Item card pastel accent ──────────────── */
 .menu-item-card {
-  border-left: 4px solid #D4CBE8;
+  border-left: 4px solid #dfd3ef;
   transition: all 0.3s ease;
 }
 .menu-item-card:hover {
-  border-left-color: #BAA0E6;
+  border-left-color: var(--fh-accent-primary);
 }
 
 /* ── Edit section tint ────────────────────── */
 .menu-edit-section {
-  background: rgba(186, 156, 230, 0.06);
-  border-top: 1px solid rgba(167, 139, 219, 0.15);
+  background: #fffaf7;
+  border: 1px solid var(--fh-border);
 }
 
 /* ── Category bar ─────────────────────────── */
 .category-bar {
-  background: rgba(186, 156, 230, 0.15);
+  background: #fff2ea;
   border-radius: 12px;
   padding: 10px 16px;
-  border-left: 4px solid #BAA0E6;
+  border: 1px solid #eadcf7;
+  border-left: 4px solid var(--fh-accent-primary);
 }
 
 /* ── Category underline ───────────────────── */
@@ -656,20 +614,20 @@
   right: 0;
   height: 2.5px;
   border-radius: 999px;
-  background: #BAA0E6;
+  background: var(--fh-accent-primary);
 }
 
 /* ── Upload dropzone ──────────────────────── */
 .upload-dropzone {
-  border: 2px dashed rgba(167, 139, 219, 0.4);
+  border: 2px dashed rgba(133, 100, 173, 0.35);
   border-radius: 12px;
-  background: rgba(167, 139, 219, 0.05);
+  background: rgba(255, 255, 255, 0.72);
   transition: all 0.3s ease;
   cursor: pointer;
 }
 .upload-dropzone:hover {
-  border-color: rgba(167, 139, 219, 0.7);
-  background: rgba(167, 139, 219, 0.1);
+  border-color: rgba(133, 100, 173, 0.55);
+  background: #fff8f5;
 }
 .upload-dropzone.dragging {
   border-color: rgba(140, 215, 180, 0.8);
@@ -806,10 +764,6 @@
 
 /* ── Reduced motion ───────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .admin-mesh-bg::before,
-  .admin-mesh-bg::after {
-    animation: none;
-  }
   .animate-card-enter {
     animation: none;
   }
