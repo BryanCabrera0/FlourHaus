@@ -2,7 +2,7 @@
 
 import { memo, useCallback } from "react";
 import { useCartActions } from "./CartProvider";
-import type { CartItemInput } from "../lib/types";
+import type { CartItemInput } from "@/lib/types";
 
 type AddToCartButtonProps = CartItemInput;
 

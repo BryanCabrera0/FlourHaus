@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useCartActions, useCartState } from "../components/CartProvider";
 import { useState } from "react";
-import { formatCurrency } from "../lib/format";
-import type { FulfillmentMethod } from "../lib/types";
+import { formatCurrency } from "@/lib/format";
+import type { FulfillmentMethod } from "@/lib/types";
 
 export default function CartPage() {
   const { items, total } = useCartState();

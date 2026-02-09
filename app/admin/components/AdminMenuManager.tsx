@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import { formatCurrency } from "@/app/lib/format";
+import { formatCurrency } from "@/lib/format";
 
 type AdminMenuItem = {
   id: number;

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import prisma from "@/app/lib/prisma";
-import { ORDER_STATUSES, FULFILLMENT_METHODS } from "@/app/lib/types";
+import prisma from "@/lib/prisma";
+import { ORDER_STATUSES, FULFILLMENT_METHODS } from "@/lib/types";
 import { parseOrderItems } from "@/lib/orderItems";
 import { requireAdminSession } from "@/lib/adminApi";
 

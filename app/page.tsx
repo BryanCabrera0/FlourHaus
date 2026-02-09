@@ -1,5 +1,5 @@
 import Link from "next/link";
-import prisma from "./lib/prisma";
+import prisma from "@/lib/prisma";
 import MenuItemCard from "./components/MenuItemCard";
 
 export const dynamic = "force-dynamic";

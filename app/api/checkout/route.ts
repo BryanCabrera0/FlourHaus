@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import type { CartItem, FulfillmentMethod } from "../../lib/types";
+import type { CartItem, FulfillmentMethod } from "@/lib/types";
 
 export const runtime = "nodejs";
 

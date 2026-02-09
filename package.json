@@ -11,21 +11,18 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "admin:hash": "node scripts/hash-admin-password.mjs"
+    "admin:hash": "node scripts/hash-admin-password.mjs",
+    "clean": "node -e \"const fs=require(\\\"fs\\\");[\\\".next\\\",\\\".vercel/output\\\",\\\"generated\\\",\\\"app/generated\\\",\\\"tsconfig.tsbuildinfo\\\",\\\".turbo\\\"].forEach((p)=>fs.rmSync(p,{recursive:true,force:true}));\""
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.3.0",
-    "@react-three/drei": "^10.7.7",
-    "@react-three/fiber": "^9.5.0",
     "@vercel/blob": "^2.2.0",
-    "framer-motion": "^12.34.0",
     "next": "16.1.6",
     "pg": "^8.18.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "stripe": "^20.3.1",
-    "three": "^0.182.0"
+    "stripe": "^20.3.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

@@ -1,8 +1,8 @@
 import Link from "next/link";
-import prisma from "@/app/lib/prisma";
-import { formatCurrency } from "@/app/lib/format";
+import prisma from "@/lib/prisma";
+import { formatCurrency } from "@/lib/format";
 import { parseOrderItems } from "@/lib/orderItems";
-import type { FulfillmentMethod } from "@/app/lib/types";
+import type { FulfillmentMethod } from "@/lib/types";
 import AdminStripePanel from "../components/AdminStripePanel";
 
 export const dynamic = "force-dynamic";

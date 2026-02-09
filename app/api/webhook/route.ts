@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import prisma from "../../lib/prisma";
-import { FULFILLMENT_METHODS } from "../../lib/types";
+import prisma from "@/lib/prisma";
+import { FULFILLMENT_METHODS } from "@/lib/types";
 
 export const runtime = "nodejs";
 

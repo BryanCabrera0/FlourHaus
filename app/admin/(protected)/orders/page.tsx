@@ -1,12 +1,12 @@
 import Link from "next/link";
-import prisma from "@/app/lib/prisma";
+import prisma from "@/lib/prisma";
 import {
   FULFILLMENT_METHODS,
   ORDER_STATUSES,
   type FulfillmentMethod,
   type OrderStatus,
-} from "@/app/lib/types";
-import { formatCurrency } from "@/app/lib/format";
+} from "@/lib/types";
+import { formatCurrency } from "@/lib/format";
 import { parseOrderItems } from "@/lib/orderItems";
 import OrderStatusControl from "../../components/OrderStatusControl";
 

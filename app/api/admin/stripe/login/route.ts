@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import prisma from "@/app/lib/prisma";
+import prisma from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/adminApi";
 import { getStripeClient } from "@/lib/stripeAdmin";
 

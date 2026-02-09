@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ORDER_STATUSES, type OrderStatus } from "@/app/lib/types";
+import { ORDER_STATUSES, type OrderStatus } from "@/lib/types";
 
 type OrderStatusControlProps = {
   orderId: number;

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import prisma from "@/app/lib/prisma";
-import { ORDER_STATUSES } from "@/app/lib/types";
+import prisma from "@/lib/prisma";
+import { ORDER_STATUSES } from "@/lib/types";
 import { requireAdminSession } from "@/lib/adminApi";
 
 export const runtime = "nodejs";

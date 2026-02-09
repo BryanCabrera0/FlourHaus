@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type Stripe from "stripe";
-import prisma from "@/app/lib/prisma";
+import prisma from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/adminApi";
 import { getBaseUrl, getStripeClient } from "@/lib/stripeAdmin";
 

@@ -1,4 +1,4 @@
-import type { OrderItem } from "@/app/lib/types";
+import type { OrderItem } from "@/lib/types";
 
 function isOrderItem(value: unknown): value is OrderItem {
   if (typeof value !== "object" || value === null) {

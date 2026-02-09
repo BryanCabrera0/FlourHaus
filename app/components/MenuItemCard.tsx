@@ -1,6 +1,6 @@
 import AddToCartButton from "./AddToCartButton";
-import { formatCurrency } from "../lib/format";
-import type { MenuItemCardData } from "../lib/types";
+import { formatCurrency } from "@/lib/format";
+import type { MenuItemCardData } from "@/lib/types";
 
 type MenuItemCardProps = {
   item: MenuItemCardData;

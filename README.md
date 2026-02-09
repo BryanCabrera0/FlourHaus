@@ -65,3 +65,11 @@ App runs at `http://localhost:3000`.
 - `npm run start` start production server
 - `npm run lint` run ESLint
 - `npm run admin:hash -- "password"` generate admin password hash
+- `npm run clean` remove generated/cache artifacts (`.next`, `.vercel/output`, Prisma generated client, ts build cache)
+
+## Folder Layout
+
+- `app/` Next.js App Router pages, API routes, and UI components
+- `lib/` shared server/client utilities and domain helpers
+- `prisma/` schema, migrations, and seed script
+- `scripts/` local utility scripts

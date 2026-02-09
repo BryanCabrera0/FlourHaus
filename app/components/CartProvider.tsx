@@ -7,7 +7,7 @@ import {
   useMemo,
   useReducer,
 } from "react";
-import type { CartItem, CartItemInput } from "../lib/types";
+import type { CartItem, CartItemInput } from "@/lib/types";
 
 type CartState = {
   items: CartItem[];
