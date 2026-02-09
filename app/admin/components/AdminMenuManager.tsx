@@ -193,7 +193,7 @@ function ImageUploadField({
           {uploading ? (
             <div className="py-2">
               <div className="upload-progress-bar w-full mx-auto" style={{ maxWidth: 200 }} />
-              <p className="text-xs mt-2" style={{ color: "#8B7EB0" }}>
+              <p className="text-xs mt-2" style={{ color: "#5E5485" }}>
                 Uploading...
               </p>
             </div>
@@ -214,10 +214,10 @@ function ImageUploadField({
                 <polyline points="17 8 12 3 7 8" />
                 <line x1="12" y1="3" x2="12" y2="15" />
               </svg>
-              <p className="text-xs" style={{ color: "#8B7EB0" }}>
+              <p className="text-xs" style={{ color: "#5E5485" }}>
                 Drop an image or click to browse
               </p>
-              <p className="text-xs mt-0.5" style={{ color: "#ADA0C8" }}>
+              <p className="text-xs mt-0.5" style={{ color: "#6E6395" }}>
                 JPEG, PNG, WebP, GIF &middot; Max 5 MB
               </p>
             </div>
@@ -507,7 +507,7 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
             >
               +
             </span>
-            <h2 className="text-xl font-bold" style={{ color: "#332B52" }}>
+            <h2 className="text-xl font-bold" style={{ color: "#40375F" }}>
               Add Menu Item
             </h2>
           </div>
@@ -581,7 +581,7 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                 </div>
               </div>
               <div className="mt-4 flex items-center justify-between gap-4 flex-wrap">
-                <label className="text-sm flex items-center gap-2" style={{ color: "#5E5580" }}>
+                <label className="text-sm flex items-center gap-2" style={{ color: "#6B5D79" }}>
                   <input
                     type="checkbox"
                     checked={createForm.isActive}
@@ -620,7 +620,7 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
       {/* ── Menu items grouped by category ── */}
       {!hasItems ? (
         <div className="panel panel-hover-glow p-6 animate-card-enter">
-          <p style={{ color: "#5E5580" }}>No menu items yet.</p>
+          <p style={{ color: "#6B5D79" }}>No menu items yet.</p>
         </div>
       ) : (
         grouped.map((group) => (
@@ -675,7 +675,7 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                       )}
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-semibold" style={{ color: "#332B52" }}>
+                          <p className="font-semibold" style={{ color: "#40375F" }}>
                             {item.name}
                           </p>
                           <span className="text-xs font-medium accent-sky px-1.5 py-0.5 rounded" style={{ fontSize: "0.65rem" }}>
@@ -693,10 +693,10 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                             </span>
                           )}
                         </div>
-                        <p className="text-sm mt-0.5" style={{ color: "#5E5580" }}>
+                        <p className="text-sm mt-0.5" style={{ color: "#6B5D79" }}>
                           {formatCurrency(item.price)} &middot; display order {item.sortOrder}
                         </p>
-                        <p className="text-xs mt-0.5" style={{ color: "#ADA0C8" }}>
+                        <p className="text-xs mt-0.5" style={{ color: "#6E6395" }}>
                           Updated {new Date(item.updatedAt).toLocaleString()}
                         </p>
                       </div>
@@ -777,7 +777,7 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                     </div>
 
                     <div className="mt-4 flex justify-between items-center gap-4 flex-wrap">
-                      <label className="text-sm flex items-center gap-2" style={{ color: "#5E5580" }}>
+                      <label className="text-sm flex items-center gap-2" style={{ color: "#6B5D79" }}>
                         <input
                           type="checkbox"
                           checked={draft.isActive}

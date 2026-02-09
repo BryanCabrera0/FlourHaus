@@ -83,12 +83,12 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
   return (
     <div className="space-y-6">
       <div className="panel p-6">
-        <h1 className="text-3xl font-bold mb-5" style={{ color: "#332B52" }}>
+        <h1 className="text-3xl font-bold mb-5" style={{ color: "#40375F" }}>
           Orders
         </h1>
         <div className="flex flex-col gap-4">
           <div>
-            <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "#5BA4D4" }}>
+            <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "#3F83B5" }}>
               Status
             </p>
             <div className="flex flex-wrap gap-2">
@@ -136,7 +136,7 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
 
       {orders.length === 0 ? (
         <div className="panel p-6">
-          <p style={{ color: "#5E5580" }}>No orders match the current filters.</p>
+          <p style={{ color: "#6B5D79" }}>No orders match the current filters.</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -148,7 +148,7 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
                 <div className="p-5 flex flex-col gap-3 md:flex-row md:justify-between md:items-start">
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-lg font-semibold" style={{ color: "#332B52" }}>
+                      <p className="text-lg font-semibold" style={{ color: "#40375F" }}>
                         Order #{order.id}
                       </p>
                       <span className={STATUS_BADGE[order.status] ?? "badge"}>
@@ -158,13 +158,13 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
                         {order.fulfillment}
                       </span>
                     </div>
-                    <p className="text-sm" style={{ color: "#5E5580" }}>
+                    <p className="text-sm" style={{ color: "#6B5D79" }}>
                       {order.createdAt.toLocaleString()}
                     </p>
 
                     {/* Customer info */}
                     {order.customerName ? (
-                      <div className="flex items-center gap-2 text-sm" style={{ color: "#4A4068" }}>
+                      <div className="flex items-center gap-2 text-sm" style={{ color: "#463A55" }}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                           <circle cx="12" cy="7" r="4" />
@@ -186,7 +186,7 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
                 {order.notes ? (
                   <div className="mx-5 mb-4">
                     <div className="notes-callout">
-                      <p className="text-xs uppercase tracking-wider mb-1 font-semibold" style={{ color: "#5BA4D4" }}>
+                      <p className="text-xs uppercase tracking-wider mb-1 font-semibold" style={{ color: "#3F83B5" }}>
                         Notes
                       </p>
                       {order.notes}
@@ -195,9 +195,9 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
                 ) : null}
 
                 {/* Items section */}
-                <div className="border-t border-[#E0D8F0] px-5 py-4 space-y-1">
+                <div className="border-t border-[#D5CCE5] px-5 py-4 space-y-1">
                   {items.length === 0 ? (
-                    <p className="text-sm" style={{ color: "#5E5580" }}>
+                    <p className="text-sm" style={{ color: "#6B5D79" }}>
                       No line items captured.
                     </p>
                   ) : (
@@ -206,10 +206,10 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
                         key={`${order.id}-${item.id}`}
                         className="flex justify-between text-sm"
                       >
-                        <span style={{ color: "#332B52" }}>
+                        <span style={{ color: "#40375F" }}>
                           {item.quantity}x {item.name}
                         </span>
-                        <span style={{ color: "#5E5580" }}>
+                        <span style={{ color: "#6B5D79" }}>
                           {formatCurrency(item.price * item.quantity)}
                         </span>
                       </div>
@@ -218,8 +218,8 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
                 </div>
 
                 {/* Total */}
-                <div className="border-t border-[#E0D8F0] px-5 py-3 flex justify-end">
-                  <p className="font-bold text-lg" style={{ color: "#5BA4D4" }}>
+                <div className="border-t border-[#D5CCE5] px-5 py-3 flex justify-end">
+                  <p className="font-bold text-lg" style={{ color: "#3F83B5" }}>
                     {formatCurrency(order.total)}
                   </p>
                 </div>

@@ -53,7 +53,7 @@ export default function AdminLoginForm({ nextPath }: AdminLoginFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="panel p-8">
-      <p className="text-sm mb-6" style={{ color: "#5E5580" }}>
+      <p className="text-sm mb-6" style={{ color: "#6B5D79" }}>
         Sign in to manage orders and menu items.
       </p>
 

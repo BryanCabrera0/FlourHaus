@@ -54,7 +54,7 @@ export default async function AdminDashboardPage() {
           <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "#C08A30" }}>
             Orders Today
           </p>
-          <p className="text-3xl font-bold" style={{ color: "#332B52" }}>
+          <p className="text-3xl font-bold" style={{ color: "#40375F" }}>
             {todaysOrders}
           </p>
         </div>
@@ -62,7 +62,7 @@ export default async function AdminDashboardPage() {
           <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "#3D9E7A" }}>
             Open Orders
           </p>
-          <p className="text-3xl font-bold" style={{ color: "#332B52" }}>
+          <p className="text-3xl font-bold" style={{ color: "#40375F" }}>
             {openOrders}
           </p>
         </div>
@@ -70,7 +70,7 @@ export default async function AdminDashboardPage() {
           <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "#40A8A0" }}>
             Revenue Today
           </p>
-          <p className="text-3xl font-bold" style={{ color: "#332B52" }}>
+          <p className="text-3xl font-bold" style={{ color: "#40375F" }}>
             {formatCurrency(revenue)}
           </p>
         </div>
@@ -78,9 +78,9 @@ export default async function AdminDashboardPage() {
           <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "#D06080" }}>
             Active Menu Items
           </p>
-          <p className="text-3xl font-bold" style={{ color: "#332B52" }}>
+          <p className="text-3xl font-bold" style={{ color: "#40375F" }}>
             {activeMenuItems}
-            <span className="text-lg font-normal" style={{ color: "#8B7EB0" }}>
+            <span className="text-lg font-normal" style={{ color: "#5E5485" }}>
               {" "}/ {totalMenuItems}
             </span>
           </p>
@@ -89,7 +89,7 @@ export default async function AdminDashboardPage() {
 
       <section className="panel p-6">
         <div className="flex justify-between items-center mb-5">
-          <h2 className="text-2xl font-bold" style={{ color: "#332B52" }}>
+          <h2 className="text-2xl font-bold" style={{ color: "#40375F" }}>
             Recent Orders
           </h2>
           <Link href="/admin/orders" className="btn-primary py-2 px-4 text-xs">
@@ -98,7 +98,7 @@ export default async function AdminDashboardPage() {
         </div>
 
         {totalOrders === 0 ? (
-          <p style={{ color: "#5E5580" }}>No orders yet.</p>
+          <p style={{ color: "#6B5D79" }}>No orders yet.</p>
         ) : (
           <div className="space-y-3">
             {recentOrders.map((order) => {
@@ -108,11 +108,11 @@ export default async function AdminDashboardPage() {
               return (
                 <div
                   key={order.id}
-                  className="bg-white rounded-xl border border-[#E0D8F0] p-4 flex flex-col md:flex-row md:justify-between gap-3"
+                  className="bg-[#FFFDFC] rounded-xl border border-[#D5CCE5] p-4 flex flex-col md:flex-row md:justify-between gap-3"
                 >
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-semibold" style={{ color: "#332B52" }}>
+                      <p className="font-semibold" style={{ color: "#40375F" }}>
                         Order #{order.id}
                       </p>
                       <span className={STATUS_BADGE[order.status] ?? "badge"}>
@@ -122,12 +122,12 @@ export default async function AdminDashboardPage() {
                         {order.fulfillment}
                       </span>
                     </div>
-                    <p className="text-sm" style={{ color: "#5E5580" }}>
+                    <p className="text-sm" style={{ color: "#6B5D79" }}>
                       {order.createdAt.toLocaleString()} &middot; {itemCount} item
                       {itemCount === 1 ? "" : "s"}
                     </p>
                   </div>
-                  <div className="font-bold self-start md:self-center text-lg" style={{ color: "#5BA4D4" }}>
+                  <div className="font-bold self-start md:self-center text-lg" style={{ color: "#3F83B5" }}>
                     {formatCurrency(order.total)}
                   </div>
                 </div>

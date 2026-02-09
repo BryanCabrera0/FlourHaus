@@ -18,12 +18,12 @@ export default async function AdminLoginPage({ searchParams }: AdminLoginPagePro
 
   if (!configured) {
     return (
-      <div className="min-h-screen bg-surface flex items-center justify-center px-6">
+      <div className="bg-surface flex items-center justify-center px-6 py-16">
         <div className="panel p-8 max-w-lg">
-          <h1 className="text-3xl font-bold mb-3" style={{ color: "#332B52" }}>
+          <h1 className="text-3xl font-bold mb-3" style={{ color: "#40375F" }}>
             Admin Auth Not Configured
           </h1>
-          <p style={{ color: "#5E5580" }}>
+          <p style={{ color: "#6B5D79" }}>
             Set <code>ADMIN_EMAIL</code>, <code>ADMIN_PASSWORD_HASH</code>, and{" "}
             <code>ADMIN_SESSION_SECRET</code> in your environment variables.
           </p>
@@ -33,7 +33,7 @@ export default async function AdminLoginPage({ searchParams }: AdminLoginPagePro
   }
 
   return (
-    <div className="min-h-screen bg-surface flex items-center justify-center px-6">
+    <div className="bg-surface flex items-center justify-center px-6 py-16">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div
@@ -56,11 +56,11 @@ export default async function AdminLoginPage({ searchParams }: AdminLoginPagePro
           </div>
           <h1
             className="text-2xl font-bold"
-            style={{ color: "#332B52", fontFamily: "Poppins, sans-serif" }}
+            style={{ color: "#40375F", fontFamily: "Poppins, sans-serif" }}
           >
             Flour Haus
           </h1>
-          <p className="text-sm mt-1" style={{ color: "#8B7EB0" }}>
+          <p className="text-sm mt-1" style={{ color: "#5E5485" }}>
             Admin Portal
           </p>
         </div>

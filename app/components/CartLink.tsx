@@ -8,12 +8,14 @@ export default function CartLink() {
   const count = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
-    <Link href="/cart" className="relative font-medium text-sm uppercase tracking-wider transition-colors" style={{ color: "#4A4068" }}>
+    <Link
+      href="/cart"
+      className="nav-link relative font-semibold text-xs sm:text-sm uppercase tracking-wider"
+    >
       Cart
       {count > 0 ? (
         <span
-          className="absolute -top-2.5 -right-5 min-w-[20px] h-5 flex items-center justify-center rounded-full text-xs font-bold leading-none"
-          style={{ backgroundColor: "#E0709A", color: "#FFFFFF", fontSize: "11px", padding: "0 5px" }}
+          className="cart-count-badge absolute -top-2.5 -right-4 text-xs font-bold"
         >
           {count}
         </span>

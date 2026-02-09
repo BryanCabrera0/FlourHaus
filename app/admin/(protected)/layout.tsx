@@ -15,18 +15,18 @@ export default async function ProtectedAdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="bg-surface">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <header className="panel p-4 sm:p-5 mb-8 flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
           <div className="flex items-center gap-3">
             <div>
               <p
                 className="text-xs uppercase tracking-[0.2em] font-semibold"
-                style={{ color: "#8B7EB0" }}
+                style={{ color: "#5E5485" }}
               >
                 Flour Haus Admin
               </p>
-              <p className="text-xs mt-0.5" style={{ color: "#5E5580" }}>
+              <p className="text-xs mt-0.5" style={{ color: "#6B5D79" }}>
                 {session.email}
               </p>
             </div>
