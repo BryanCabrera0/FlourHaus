@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Link from "next/link";
 import { CartProvider } from "./components/CartProvider";
+import CartLink from "./components/CartLink";
 
 export const metadata: Metadata = {
   title: "Flour Haus",
@@ -16,19 +17,19 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <nav className="nav-glass sticky top-0 z-50">
-          <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-            <Link href="/" className="font-bold text-xl tracking-wide" style={{ fontFamily: "Poppins, sans-serif", color: "#8B5E3C" }}>
-              Flour Haus
-            </Link>
-            <div className="flex gap-8">
-              <Link href="/menu" className="font-medium text-sm uppercase tracking-wider transition-colors" style={{ color: "#5C4033" }}>Menu</Link>
-              <Link href="/about" className="font-medium text-sm uppercase tracking-wider transition-colors" style={{ color: "#5C4033" }}>About</Link>
-              <Link href="/cart" className="font-medium text-sm uppercase tracking-wider transition-colors" style={{ color: "#5C4033" }}>Cart</Link>
-            </div>
-          </div>
-        </nav>
         <CartProvider>
+          <nav className="nav-glass sticky top-0 z-50">
+            <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+              <Link href="/" className="font-bold text-xl tracking-wide" style={{ fontFamily: "Poppins, sans-serif", color: "#8B5E3C" }}>
+                Flour Haus
+              </Link>
+              <div className="flex gap-8 items-center">
+                <Link href="/menu" className="font-medium text-sm uppercase tracking-wider transition-colors" style={{ color: "#5C4033" }}>Menu</Link>
+                <Link href="/about" className="font-medium text-sm uppercase tracking-wider transition-colors" style={{ color: "#5C4033" }}>About</Link>
+                <CartLink />
+              </div>
+            </div>
+          </nav>
           {children}
         </CartProvider>
         <footer className="footer-gradient mt-20" style={{ color: "#D4B89C" }}>
@@ -53,6 +54,9 @@ export default function RootLayout({
             </div>
             <div className="mt-10 pt-6 text-center text-sm opacity-60" style={{ borderTop: "1px solid rgba(212, 184, 156, 0.2)" }}>
               <p>&copy; {new Date().getFullYear()} Flour Haus. All rights reserved.</p>
+              <Link href="/admin/login" className="inline-block mt-2 opacity-50 hover:opacity-80 transition-opacity text-xs">
+                Owner Login
+              </Link>
             </div>
           </div>
         </footer>
