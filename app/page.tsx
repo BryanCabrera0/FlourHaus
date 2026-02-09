@@ -1,24 +1,18 @@
 import Link from "next/link";
 import prisma from "./lib/prisma";
-import AddToCartButton from "./components/AddToCartButton";
-
-
-
-function MenuItem({ id, name, price, description }: { id: number; name: string; price: number; description: string }) {
-  return (
-    <div className="bg-white rounded-2xl shadow-md p-6 hover:shadow-lg transition-shadow border border-[#F0D9E8]">
-      <div className="flex justify-between items-start mb-2">
-        <h3 className="text-lg font-semibold text-[#4A3F4B]">{name}</h3>
-        <span className="text-[#D4A0B9] font-bold">${price.toFixed(2)}</span>
-      </div>
-      <p className="text-sm text-[#6B5B6E]">{description}</p>
-      <AddToCartButton id={id} name={name} price={price} />
-    </div>
-  );
-}
+import MenuItemCard from "./components/MenuItemCard";
 
 export default async function HomePage() {
-  const menuItems = await prisma.menuItem.findMany();
+  const menuItems = await prisma.menuItem.findMany({
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      price: true,
+    },
+    orderBy: { id: "asc" },
+  });
+
   return (
     <div className="min-h-screen p-8 max-w-5xl mx-auto">
       <header className="text-center mb-12">
@@ -31,7 +25,7 @@ export default async function HomePage() {
         <h2 className="text-2xl font-semibold text-[#4A3F4B] mb-6">Our Menu</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {menuItems.map((item) => (
-            <MenuItem key={item.name} id={item.id} name={item.name} price={item.price} description={item.description} />
+            <MenuItemCard key={item.id} item={item} />
           ))}
         </div>
       </section>

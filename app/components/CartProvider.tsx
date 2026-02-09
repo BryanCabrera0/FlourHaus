@@ -1,55 +1,116 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useReducer,
+} from "react";
+import type { CartItem, CartItemInput } from "../lib/types";
 
-type CartItem = {
-  id: number;
-  name: string;
-  price: number;
-  quantity: number;
-};
-
-type CartContextType = {
+type CartState = {
   items: CartItem[];
-  addToCart: (item: { id: number; name: string; price: number }) => void;
-  removeFromCart: (id: number) => void;
-  getTotal: () => number;
+  total: number;
 };
 
-const CartContext = createContext<CartContextType | null>(null);
+type CartActions = {
+  addToCart: (item: CartItemInput) => void;
+  removeFromCart: (id: number) => void;
+  clearCart: () => void;
+};
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([]);
+type CartAction =
+  | { type: "add"; item: CartItemInput }
+  | { type: "remove"; id: number }
+  | { type: "clear" };
 
-  function addToCart(item: { id: number; name: string; price: number }) {
-    setItems((prev) => {
-      const existing = prev.find((i) => i.id === item.id);
+const CartStateContext = createContext<CartState | null>(null);
+const CartActionsContext = createContext<CartActions | null>(null);
+
+function cartReducer(items: CartItem[], action: CartAction): CartItem[] {
+  switch (action.type) {
+    case "add": {
+      const existing = items.find((item) => item.id === action.item.id);
       if (existing) {
-        return prev.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+        return items.map((item) =>
+          item.id === action.item.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
         );
       }
-      return [...prev, { ...item, quantity: 1 }];
-    });
-  }
 
-  function removeFromCart(id: number) {
-    setItems((prev) => prev.filter((i) => i.id !== id));
+      return [...items, { ...action.item, quantity: 1 }];
+    }
+    case "remove":
+      return items.filter((item) => item.id !== action.id);
+    case "clear":
+      return [];
+    default:
+      return items;
   }
+}
 
-  function getTotal() {
-    return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  }
+export function CartProvider({ children }: { children: React.ReactNode }) {
+  const [items, dispatch] = useReducer(cartReducer, []);
+  const total = useMemo(
+    () => items.reduce((sum, item) => sum + item.price * item.quantity, 0),
+    [items]
+  );
+
+  const addToCart = useCallback((item: CartItemInput) => {
+    dispatch({ type: "add", item });
+  }, []);
+
+  const removeFromCart = useCallback((id: number) => {
+    dispatch({ type: "remove", id });
+  }, []);
+
+  const clearCart = useCallback(() => {
+    dispatch({ type: "clear" });
+  }, []);
+
+  const stateValue = useMemo(() => ({ items, total }), [items, total]);
+  const actionsValue = useMemo(
+    () => ({ addToCart, removeFromCart, clearCart }),
+    [addToCart, removeFromCart, clearCart]
+  );
 
   return (
-    <CartContext.Provider value={{ items, addToCart, removeFromCart, getTotal }}>
-      {children}
-    </CartContext.Provider>
+    <CartStateContext.Provider value={stateValue}>
+      <CartActionsContext.Provider value={actionsValue}>
+        {children}
+      </CartActionsContext.Provider>
+    </CartStateContext.Provider>
   );
 }
 
-export function useCart() {
-  const context = useContext(CartContext);
-  if (!context) throw new Error("useCart must be used within CartProvider");
+export function useCartState() {
+  const context = useContext(CartStateContext);
+  if (!context) {
+    throw new Error("useCartState must be used within CartProvider");
+  }
   return context;
+}
+
+export function useCartActions() {
+  const context = useContext(CartActionsContext);
+  if (!context) {
+    throw new Error("useCartActions must be used within CartProvider");
+  }
+  return context;
+}
+
+export function useCart() {
+  const { items, total } = useCartState();
+  const { addToCart, removeFromCart, clearCart } = useCartActions();
+
+  return {
+    items,
+    total,
+    addToCart,
+    removeFromCart,
+    clearCart,
+    getTotal: () => total,
+  };
 }

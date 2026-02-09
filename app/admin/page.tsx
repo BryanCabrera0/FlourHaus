@@ -1,4 +1,38 @@
 import prisma from "../lib/prisma";
+import { formatCurrency } from "../lib/format";
+import type { OrderItem } from "../lib/types";
+
+function isOrderItem(value: unknown): value is OrderItem {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const item = value as Record<string, unknown>;
+  return (
+    typeof item.id === "number" &&
+    Number.isInteger(item.id) &&
+    typeof item.name === "string" &&
+    typeof item.price === "number" &&
+    Number.isFinite(item.price) &&
+    item.price >= 0 &&
+    typeof item.quantity === "number" &&
+    Number.isInteger(item.quantity) &&
+    item.quantity > 0
+  );
+}
+
+function parseOrderItems(itemsJson: string): OrderItem[] {
+  try {
+    const parsed: unknown = JSON.parse(itemsJson);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed.filter(isOrderItem);
+  } catch {
+    return [];
+  }
+}
 
 export default async function AdminPage() {
   const orders = await prisma.order.findMany({
@@ -12,7 +46,7 @@ export default async function AdminPage() {
         <p className="text-[#6B5B6E]">No orders yet.</p>
       ) : (
         orders.map((order) => {
-          const items = JSON.parse(order.items);
+          const items = parseOrderItems(order.items);
           return (
             <div
               key={order.id}
@@ -55,20 +89,21 @@ export default async function AdminPage() {
                 </div>
               </div>
               <div className="mb-3">
-                {items.map(
-                  (
-                    item: { name: string; quantity: number; price: number },
-                    index: number
-                  ) => (
-                    <p key={index} className="text-sm text-[#4A3F4B]">
-                      {item.quantity}x {item.name} — $
-                      {(item.price * item.quantity).toFixed(2)}
+                {items.length === 0 ? (
+                  <p className="text-sm text-[#6B5B6E]">
+                    No item details captured for this order.
+                  </p>
+                ) : (
+                  items.map((item) => (
+                    <p key={item.id} className="text-sm text-[#4A3F4B]">
+                      {item.quantity}x {item.name} —{" "}
+                      {formatCurrency(item.price * item.quantity)}
                     </p>
-                  )
+                  ))
                 )}
               </div>
               <p className="font-bold text-[#D4A0B9]">
-                Total: ${order.total.toFixed(2)}
+                Total: {formatCurrency(order.total)}
               </p>
             </div>
           );
