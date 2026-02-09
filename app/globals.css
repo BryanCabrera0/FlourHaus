@@ -50,6 +50,19 @@
   }
 }
 
+/* ── Fluid shader background layer ─────────── */
+.fh-fluid-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.fh-fluid-bg canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
 /* ── Shared text + link utilities ─────────── */
 .text-fh-heading {
   color: var(--fh-heading);
@@ -319,11 +332,12 @@
 /* ── Section backgrounds ──────────────────── */
 .bg-surface,
 .bg-warm-gradient {
-  background: var(--fh-bg);
+  /* Keep pages readable while letting the fluid shader show through. */
+  background: rgba(215, 238, 255, 0.6);
 }
 
 .bg-cream {
-  background: var(--fh-cream);
+  background: rgba(250, 255, 199, 0.72);
 }
 
 /* ── Hero background ──────────────────────── */
@@ -333,7 +347,12 @@
     radial-gradient(circle at 18% 12%, rgba(255, 204, 225, 0.65) 0%, transparent 42%),
     radial-gradient(circle at 82% 14%, rgba(204, 241, 255, 0.75) 0%, transparent 44%),
     radial-gradient(circle at 48% 92%, rgba(250, 255, 199, 0.6) 0%, transparent 55%),
-    linear-gradient(135deg, var(--fh-ice) 0%, var(--fh-lavender) 55%, var(--fh-pink) 100%);
+    linear-gradient(
+      135deg,
+      rgba(215, 238, 255, 0.75) 0%,
+      rgba(224, 215, 255, 0.78) 55%,
+      rgba(255, 204, 225, 0.72) 100%
+    );
 }
 
 /* ── Section wave divider ─────────────────── */
@@ -347,7 +366,7 @@
   left: 0;
   right: 0;
   height: 60px;
-  background: var(--fh-bg);
+  background: rgba(215, 238, 255, 0.6);
   clip-path: ellipse(55% 100% at 50% 100%);
 }
 
