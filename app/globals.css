@@ -163,7 +163,11 @@
 
 /* ── Cozy nav ────────────────────────────── */
 .nav-glass {
-  background: rgba(255, 255, 255, 0.92);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(224, 215, 255, 0.6) 100%
+  );
   border-bottom: 1px solid var(--fh-border);
   box-shadow:
     0 1px 0 rgba(70, 58, 85, 0.08),
@@ -172,7 +176,12 @@
 
 /* ── Card system ──────────────────────────── */
 .card {
-  background: rgba(255, 255, 255, 0.92);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.94) 0%,
+    rgba(255, 204, 225, 0.18) 55%,
+    rgba(224, 215, 255, 0.32) 100%
+  );
   border-radius: 16px;
   border: 1px solid var(--fh-border);
   box-shadow:
@@ -191,7 +200,11 @@
 
 /* ── Panel (elevated surface) ─────────────── */
 .panel {
-  background: rgba(255, 255, 255, 0.92);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.94) 0%,
+    rgba(215, 238, 255, 0.5) 100%
+  );
   border-radius: 20px;
   border: 1px solid var(--fh-border);
   box-shadow:
@@ -211,7 +224,11 @@
 
 /* ── Primary button ───────────────────────── */
 .btn-primary {
-  background: var(--fh-lavender);
+  background: linear-gradient(
+    135deg,
+    var(--fh-accent-lavender) 0%,
+    var(--fh-accent-rose) 100%
+  );
   color: var(--fh-heading);
   border-radius: 14px;
   border: 1px solid rgba(45, 40, 80, 0.14);
@@ -222,7 +239,11 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .btn-primary:hover {
-  background: var(--fh-pink);
+  background: linear-gradient(
+    135deg,
+    var(--fh-accent-rose) 0%,
+    var(--fh-accent-lavender) 100%
+  );
   box-shadow:
     0 6px 16px rgba(107, 91, 149, 0.22),
     0 14px 34px rgba(255, 204, 225, 0.26);
@@ -231,7 +252,11 @@
 
 /* ── Dark button ──────────────────────────── */
 .btn-dark {
-  background: var(--fh-blue);
+  background: linear-gradient(
+    135deg,
+    var(--fh-yellow) 0%,
+    var(--fh-blue) 100%
+  );
   color: var(--fh-heading);
   border-radius: 14px;
   border: 1px solid rgba(45, 40, 80, 0.16);
@@ -242,7 +267,11 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .btn-dark:hover {
-  background: var(--fh-lavender);
+  background: linear-gradient(
+    135deg,
+    var(--fh-blue) 0%,
+    var(--fh-yellow) 100%
+  );
   box-shadow:
     0 5px 14px rgba(70, 58, 85, 0.26),
     0 10px 26px rgba(70, 58, 85, 0.22);
@@ -300,7 +329,11 @@
 /* ── Hero background ──────────────────────── */
 .hero-surface,
 .hero-gradient {
-  background: var(--fh-lavender);
+  background:
+    radial-gradient(circle at 18% 12%, rgba(255, 204, 225, 0.65) 0%, transparent 42%),
+    radial-gradient(circle at 82% 14%, rgba(204, 241, 255, 0.75) 0%, transparent 44%),
+    radial-gradient(circle at 48% 92%, rgba(250, 255, 199, 0.6) 0%, transparent 55%),
+    linear-gradient(135deg, var(--fh-ice) 0%, var(--fh-lavender) 55%, var(--fh-pink) 100%);
 }
 
 /* ── Section wave divider ─────────────────── */
@@ -328,7 +361,11 @@
 
 /* ── Fulfillment toggle ───────────────────── */
 .toggle-track {
-  background: rgba(224, 215, 255, 0.35);
+  background: linear-gradient(
+    90deg,
+    rgba(224, 215, 255, 0.35) 0%,
+    rgba(215, 238, 255, 0.5) 100%
+  );
   border: 1px solid rgba(45, 40, 80, 0.12);
 }
 
@@ -356,7 +393,15 @@
 /* ── Footer background ────────────────────── */
 .footer-surface,
 .footer-gradient {
-  background: rgba(224, 215, 255, 0.35);
+  background:
+    radial-gradient(circle at 78% 0%, rgba(255, 204, 225, 0.5) 0%, transparent 40%),
+    radial-gradient(circle at 12% 95%, rgba(204, 241, 255, 0.55) 0%, transparent 45%),
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.92) 0%,
+      rgba(224, 215, 255, 0.45) 55%,
+      rgba(215, 238, 255, 0.6) 100%
+    );
 }
 
 /* ── Subtle text shadow for hero ──────────── */
@@ -447,7 +492,11 @@
 
 /* ── Stat card with left accent ──────────── */
 .stat-card {
-  background: rgba(255, 255, 255, 0.92);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(215, 238, 255, 0.35) 100%
+  );
   border-radius: 16px;
   border: 1px solid var(--fh-border);
   box-shadow:
@@ -462,16 +511,32 @@
     0 8px 20px rgba(45, 40, 69, 0.06);
 }
 .stat-card-amber {
-  background: rgba(250, 255, 199, 0.7);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(250, 255, 199, 0.55) 100%
+  );
 }
 .stat-card-green {
-  background: rgba(204, 241, 255, 0.72);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(204, 241, 255, 0.55) 100%
+  );
 }
 .stat-card-teal {
-  background: rgba(215, 238, 255, 0.8);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(215, 238, 255, 0.55) 100%
+  );
 }
 .stat-card-rose {
-  background: rgba(255, 204, 225, 0.72);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(255, 204, 225, 0.55) 100%
+  );
 }
 
 /* ── Status badges ───────────────────────── */
@@ -619,13 +684,21 @@
 
 /* ── Menu header panel ────────────────────── */
 .menu-header-panel {
-  background: rgba(255, 255, 255, 0.92);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(215, 238, 255, 0.55) 100%
+  );
   border-top: 1px solid var(--fh-border);
 }
 
 /* ── Add-form panel ───────────────────────── */
 .menu-add-panel {
-  background: rgba(255, 255, 255, 0.92);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(224, 215, 255, 0.5) 100%
+  );
   border-top: 1px solid var(--fh-border);
 }
 
@@ -695,7 +768,12 @@
 .upload-progress-bar {
   height: 4px;
   border-radius: 999px;
-  background: rgba(107, 91, 149, 0.85);
+  background: linear-gradient(
+    90deg,
+    rgba(224, 215, 255, 1) 0%,
+    rgba(255, 204, 225, 1) 42%,
+    rgba(204, 241, 255, 1) 100%
+  );
 }
 @keyframes shimmer {
   0%   { background-position: 200% 0; }
@@ -754,7 +832,12 @@
 
 /* ── Pastel button variant ────────────────── */
 .btn-pastel-primary {
-  background: var(--fh-blue);
+  background: linear-gradient(
+    135deg,
+    rgba(204, 241, 255, 0.95) 0%,
+    rgba(224, 215, 255, 0.95) 55%,
+    rgba(255, 204, 225, 0.82) 100%
+  );
   color: var(--fh-heading);
   border: 1px solid rgba(45, 40, 80, 0.14);
   border-radius: 12px;
@@ -765,7 +848,12 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .btn-pastel-primary:hover {
-  background: var(--fh-lavender);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 204, 225, 0.9) 0%,
+    rgba(224, 215, 255, 0.95) 55%,
+    rgba(204, 241, 255, 0.95) 100%
+  );
   box-shadow:
     0 8px 22px rgba(70, 58, 85, 0.12),
     0 18px 40px rgba(255, 204, 225, 0.22);
