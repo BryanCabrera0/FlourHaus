@@ -280,6 +280,8 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
   const [isCreating, setIsCreating] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [busyIds, setBusyIds] = useState<Record<number, boolean>>({});
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(() => new Set());
+  const [isBulkWorking, setIsBulkWorking] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
   const [editingItemId, setEditingItemId] = useState<number | null>(null);
@@ -313,6 +315,33 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
     [visibleGroups],
   );
 
+  const visibleItemIds = useMemo(
+    () => visibleGroups.flatMap((group) => group.items.map((item) => item.id)),
+    [visibleGroups],
+  );
+
+  const selectedCount = selectedIds.size;
+  const isSomeVisibleSelected = visibleItemIds.some((id) => selectedIds.has(id));
+  const isAllVisibleSelected =
+    visibleItemIds.length > 0 && visibleItemIds.every((id) => selectedIds.has(id));
+
+  const selectAllVisibleRef = useCallback(
+    (node: HTMLInputElement | null) => {
+      if (!node) {
+        return;
+      }
+      node.indeterminate = !isAllVisibleSelected && isSomeVisibleSelected;
+    },
+    [isAllVisibleSelected, isSomeVisibleSelected],
+  );
+
+  const anySelectedBusy = useMemo(
+    () => Array.from(selectedIds).some((id) => !!busyIds[id]),
+    [busyIds, selectedIds],
+  );
+
+  const bulkActionsDisabled = isBulkWorking || selectedCount === 0 || anySelectedBusy;
+
   function setDraftValue(id: number, field: keyof MenuDraft, value: string | boolean) {
     setDrafts((prev) => ({
       ...prev,
@@ -325,6 +354,52 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
 
   function setBusy(id: number, value: boolean) {
     setBusyIds((prev) => ({ ...prev, [id]: value }));
+  }
+
+  function setBusyMany(ids: number[], value: boolean) {
+    setBusyIds((prev) => {
+      const next = { ...prev };
+      for (const id of ids) {
+        next[id] = value;
+      }
+      return next;
+    });
+  }
+
+  function toggleSelectedId(id: number) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set<number>());
+  }
+
+  function toggleSelectAllVisible() {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      const allVisibleSelected =
+        visibleItemIds.length > 0 && visibleItemIds.every((id) => prev.has(id));
+
+      if (allVisibleSelected) {
+        for (const id of visibleItemIds) {
+          next.delete(id);
+        }
+      } else {
+        for (const id of visibleItemIds) {
+          next.add(id);
+        }
+      }
+
+      return next;
+    });
   }
 
   function toggleCategory(category: string) {
@@ -533,12 +608,191 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
         return next;
       });
       setEditingItemId((prev) => (prev === id ? null : prev));
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
       setMessage(`Deleted "${item.name}".`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete menu item.");
     } finally {
       setBusy(id, false);
     }
+  }
+
+  async function requestMenuUpdate(id: number, body: Record<string, unknown>) {
+    const response = await fetch(`/api/admin/menu/${id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    const payload = (await response.json().catch(() => null)) as
+      | { error?: string; menuItem?: AdminMenuItem }
+      | null;
+
+    if (!response.ok || !payload?.menuItem) {
+      throw new Error(payload?.error ?? "Failed to update menu item.");
+    }
+
+    return payload.menuItem;
+  }
+
+  async function requestMenuDelete(id: number) {
+    const response = await fetch(`/api/admin/menu/${id}`, { method: "DELETE" });
+    const payload = (await response.json().catch(() => null)) as
+      | { error?: string; ok?: boolean }
+      | null;
+
+    if (!response.ok || !payload?.ok) {
+      throw new Error(payload?.error ?? "Failed to delete menu item.");
+    }
+  }
+
+  function formatCount(count: number, noun: string) {
+    return `${count} ${noun}${count === 1 ? "" : "s"}`;
+  }
+
+  async function handleBulkSetActive(nextActive: boolean) {
+    if (isBulkWorking || selectedIds.size === 0) {
+      return;
+    }
+
+    const itemsById = new Map(items.map((item) => [item.id, item]));
+    const targetIds = Array.from(selectedIds).filter((id) => {
+      const item = itemsById.get(id);
+      return item && item.isActive !== nextActive;
+    });
+
+    if (targetIds.length === 0) {
+      setError(null);
+      setMessage(nextActive ? "Selected items are already active." : "Selected items are already archived.");
+      return;
+    }
+
+    setIsBulkWorking(true);
+    setError(null);
+    setMessage(null);
+    setBusyMany(targetIds, true);
+
+    const updated: AdminMenuItem[] = [];
+    const failures: { id: number; error: string }[] = [];
+
+    for (const id of targetIds) {
+      try {
+        updated.push(await requestMenuUpdate(id, { isActive: nextActive }));
+      } catch (err) {
+        failures.push({
+          id,
+          error: err instanceof Error ? err.message : "Failed to update menu item.",
+        });
+      }
+    }
+
+    if (updated.length > 0) {
+      const updatedById = new Map(updated.map((item) => [item.id, item]));
+      setItems((prev) =>
+        sortItems(prev.map((item) => updatedById.get(item.id) ?? item)),
+      );
+      setDrafts((prev) => {
+        const next = { ...prev };
+        for (const item of updated) {
+          next[item.id] = toDraft(item);
+        }
+        return next;
+      });
+
+      setMessage(
+        nextActive
+          ? `Activated ${formatCount(updated.length, "item")}.`
+          : `Archived ${formatCount(updated.length, "item")}.`,
+      );
+    }
+
+    if (failures.length > 0) {
+      const first = failures[0];
+      setError(
+        `Failed to update ${formatCount(failures.length, "item")}. First error: (#${first.id}) ${first.error}`,
+      );
+    }
+
+    setBusyMany(targetIds, false);
+    setIsBulkWorking(false);
+  }
+
+  async function handleBulkDelete() {
+    if (isBulkWorking || selectedIds.size === 0) {
+      return;
+    }
+
+    const itemsById = new Map(items.map((item) => [item.id, item]));
+    const targetIds = Array.from(selectedIds).filter((id) => itemsById.has(id));
+
+    if (targetIds.length === 0) {
+      clearSelection();
+      return;
+    }
+
+    const confirmed = window.confirm(
+      targetIds.length === 1
+        ? `Delete "${itemsById.get(targetIds[0])?.name ?? "this item"}" permanently?`
+        : `Delete ${targetIds.length} menu items permanently?`,
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setIsBulkWorking(true);
+    setError(null);
+    setMessage(null);
+    setBusyMany(targetIds, true);
+
+    const deletedIds: number[] = [];
+    const failures: { id: number; error: string }[] = [];
+
+    for (const id of targetIds) {
+      try {
+        await requestMenuDelete(id);
+        deletedIds.push(id);
+      } catch (err) {
+        failures.push({
+          id,
+          error: err instanceof Error ? err.message : "Failed to delete menu item.",
+        });
+      }
+    }
+
+    if (deletedIds.length > 0) {
+      const deletedSet = new Set(deletedIds);
+      setItems((prev) => prev.filter((item) => !deletedSet.has(item.id)));
+      setDrafts((prev) => {
+        const next = { ...prev };
+        for (const id of deletedIds) {
+          delete next[id];
+        }
+        return next;
+      });
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        for (const id of deletedIds) {
+          next.delete(id);
+        }
+        return next;
+      });
+      setEditingItemId((prev) => (prev !== null && deletedSet.has(prev) ? null : prev));
+      setMessage(`Deleted ${formatCount(deletedIds.length, "item")}.`);
+    }
+
+    if (failures.length > 0) {
+      const first = failures[0];
+      setError(
+        `Failed to delete ${formatCount(failures.length, "item")}. First error: (#${first.id}) ${first.error}`,
+      );
+    }
+
+    setBusyMany(targetIds, false);
+    setIsBulkWorking(false);
   }
 
   return (
@@ -669,40 +923,91 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
         </div>
       ) : (
         <>
-          <div className="panel p-5">
-            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-              <div className="flex-1">
-                <label className="admin-label">Find Menu Items</label>
-                <input
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                  className="admin-input"
-                  placeholder="Search by name, description, or category"
-                />
+            <div className="panel p-5">
+              <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                <div className="flex-1">
+                  <label className="admin-label">Find Menu Items</label>
+                  <input
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                    className="admin-input"
+                    placeholder="Search by name, description, or category"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={expandAllVisibleCategories}
+                    className="btn-admin-nav text-xs py-2 px-3"
+                  >
+                    Expand All
+                  </button>
+                  <button
+                    type="button"
+                    onClick={collapseAllVisibleCategories}
+                    className="btn-admin-nav text-xs py-2 px-3"
+                  >
+                    Collapse All
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={expandAllVisibleCategories}
-                  className="btn-admin-nav text-xs py-2 px-3"
-                >
-                  Expand All
-                </button>
-                <button
-                  type="button"
-                  onClick={collapseAllVisibleCategories}
-                  className="btn-admin-nav text-xs py-2 px-3"
-                >
-                  Collapse All
-                </button>
+  
+              <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <label className="flex items-center gap-2 text-sm text-fh-muted">
+                  <input
+                    ref={selectAllVisibleRef}
+                    type="checkbox"
+                    className="h-4 w-4 accent-[var(--fh-accent-primary)]"
+                    checked={isAllVisibleSelected}
+                    onChange={toggleSelectAllVisible}
+                    disabled={visibleItemIds.length === 0 || isBulkWorking}
+                    aria-label="Select all visible menu items"
+                  />
+                  Select all shown
+                </label>
+  
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs text-fh-muted">Selected {selectedCount}</span>
+                  <button
+                    type="button"
+                    onClick={clearSelection}
+                    disabled={selectedCount === 0 || isBulkWorking}
+                    className="btn-admin-nav text-xs py-2 px-3 disabled:opacity-50"
+                  >
+                    Clear
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleBulkSetActive(true)}
+                    disabled={bulkActionsDisabled}
+                    className="btn-admin-nav text-xs py-2 px-3 disabled:opacity-50"
+                  >
+                    Activate
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleBulkSetActive(false)}
+                    disabled={bulkActionsDisabled}
+                    className="btn-admin-nav text-xs py-2 px-3 disabled:opacity-50"
+                  >
+                    Archive
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleBulkDelete()}
+                    disabled={bulkActionsDisabled}
+                    className="btn-remove text-xs py-2 px-3 disabled:opacity-50"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
+              <p className="text-xs text-fh-muted mt-3">
+                Showing {totalVisibleItems} item{totalVisibleItems === 1 ? "" : "s"} across{" "}
+                {visibleGroups.length} categor{visibleGroups.length === 1 ? "y" : "ies"}
+                {isFiltering ? ` matching "${searchTerm.trim()}".` : "."}
+              </p>
             </div>
-            <p className="text-xs text-fh-muted mt-3">
-              Showing {totalVisibleItems} item{totalVisibleItems === 1 ? "" : "s"} across{" "}
-              {visibleGroups.length} categor{visibleGroups.length === 1 ? "y" : "ies"}
-              {isFiltering ? ` matching "${searchTerm.trim()}".` : "."}
-            </p>
-          </div>
 
           {visibleGroups.length === 0 ? (
             <div className="panel p-6">
@@ -749,6 +1054,7 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                       {group.items.map((item, index) => {
                         const draft = drafts[item.id] ?? toDraft(item);
                         const busy = !!busyIds[item.id];
+                        const selected = selectedIds.has(item.id);
                         const isEditing = editingItemId === item.id;
                         const descriptionPreview =
                           item.description.length > 120
@@ -764,6 +1070,16 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                           >
                             <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                               <div className="flex gap-4 items-start">
+                                <div className="pt-1">
+                                  <input
+                                    type="checkbox"
+                                    checked={selected}
+                                    onChange={() => toggleSelectedId(item.id)}
+                                    disabled={busy || isBulkWorking}
+                                    className="h-4 w-4 accent-[var(--fh-accent-primary)]"
+                                    aria-label={`Select ${item.name}`}
+                                  />
+                                </div>
                                 {item.imageUrl ? (
                                   // eslint-disable-next-line @next/next/no-img-element
                                   <img
