@@ -54,6 +54,9 @@ App runs at `http://localhost:3000`.
 - Orders: `/admin/orders`
 - Menu manager: `/admin/menu`
 - Audit logs API: `/api/admin/audit`
+- Stripe status API: `/api/admin/stripe/status`
+- Stripe onboarding link API: `/api/admin/stripe/connect`
+- Stripe dashboard login API: `/api/admin/stripe/login`
 
 ## Scripts
 
