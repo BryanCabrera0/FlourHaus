@@ -19,7 +19,7 @@ export default function AboutPage() {
                 Flour Haus is a home-based bakery serving the Miami community. We pride ourselves on using the freshest ingredients and traditional recipes to create delicious baked goods that bring joy to our customers.
               </p>
               <p>
-                Whether you&apos;re looking for a birthday cake, fresh pastries for brunch, or a box of cookies to share with friends, everything is made from scratch with care and attention to detail.
+                Everything is made from scratch with care and attention to detail.
               </p>
               <p>
                 We offer local pickup and delivery across the Miami area, making it easy to enjoy homemade baked goods without leaving your home.
