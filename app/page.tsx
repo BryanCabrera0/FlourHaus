@@ -1,6 +1,7 @@
 import Link from "next/link";
 import prisma from "@/lib/prisma";
 import MenuItemCard from "./components/MenuItemCard";
+import CustomOrderRequestForm from "./components/CustomOrderRequestForm";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +57,9 @@ export default async function HomePage() {
             <Link href="/about" className="btn-ghost py-3.5 px-9 text-sm">
               Our Story
             </Link>
+            <a href="#custom-order" className="btn-pastel-primary py-3.5 px-9 text-sm">
+              Custom Order
+            </a>
           </div>
         </div>
       </section>
@@ -111,6 +115,25 @@ export default async function HomePage() {
             <Link href="/menu" className="btn-dark py-3.5 px-10 text-sm inline-block">
               Start Your Order
             </Link>
+          </div>
+        </div>
+      </section>
+
+      <section id="custom-order" className="bg-surface">
+        <div className="max-w-6xl mx-auto px-6 py-20">
+          <div className="panel p-10 md:p-12">
+            <div className="text-center mb-10">
+              <p className="kicker kicker-success mb-3">
+                Not On The Menu?
+              </p>
+              <h2 className="text-3xl md:text-4xl font-bold text-fh-heading">
+                Request A Custom Bake
+              </h2>
+              <p className="max-w-2xl mx-auto mt-4 text-lg leading-relaxed text-fh-muted">
+                Tell us what you have in mind and we will follow up with availability and pricing.
+              </p>
+            </div>
+            <CustomOrderRequestForm />
           </div>
         </div>
       </section>

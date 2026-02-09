@@ -29,3 +29,11 @@ export const ORDER_STATUSES = [
   "canceled",
 ] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
+
+export const CUSTOM_ORDER_REQUEST_STATUSES = [
+  "pending",
+  "accepted",
+  "denied",
+] as const;
+export type CustomOrderRequestStatus =
+  (typeof CUSTOM_ORDER_REQUEST_STATUSES)[number];

@@ -24,6 +24,12 @@ function normalizeOptionalImageUrl(value: unknown): string | null {
     return null;
   }
 
+  // Allow local/static paths (ex: /uploads/menu-images/foo.jpg).
+  // Reject protocol-relative URLs (//example.com) which can bypass URL parsing.
+  if (trimmed.startsWith("/")) {
+    return trimmed.startsWith("//") ? null : trimmed;
+  }
+
   try {
     const parsed = new URL(trimmed);
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {

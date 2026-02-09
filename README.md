@@ -47,11 +47,19 @@ App runs at `http://localhost:3000`.
 - `ADMIN_PASSWORD_HASH`
 - `ADMIN_SESSION_SECRET`
 
+## Optional Env Vars
+
+- `BLOB_READ_WRITE_TOKEN` (recommended) for Vercel Blob image uploads.
+  - If not set, admin image uploads fall back to local disk at `public/uploads/menu-images` (works only on writable Node runtimes; not reliable on Vercel).
+- `RESEND_API_KEY` + `RESEND_FROM_EMAIL` for custom order notifications and admin replies.
+- `CUSTOM_ORDER_REPLY_TO_EMAIL` optional Reply-To override for admin customer emails.
+
 ## Owner Admin
 
 - Login: `/admin/login`
 - Dashboard: `/admin`
 - Orders: `/admin/orders`
+- Custom orders: `/admin/custom-orders`
 - Menu manager: `/admin/menu`
 - Audit logs API: `/api/admin/audit`
 - Stripe status API: `/api/admin/stripe/status`

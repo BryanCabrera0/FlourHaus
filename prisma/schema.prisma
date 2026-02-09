@@ -24,6 +24,12 @@ enum OrderStatus {
   canceled
 }
 
+enum CustomOrderRequestStatus {
+  pending
+  accepted
+  denied
+}
+
 model MenuItem {
   id          Int      @id @default(autoincrement())
   name        String
@@ -49,6 +55,36 @@ model Order {
   notes           String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @default(now()) @updatedAt
+}
+
+model CustomOrderRequest {
+  id                    Int                      @id @default(autoincrement())
+  customerName          String
+  customerEmail         String
+  customerPhone         String?
+  desiredItems          String
+  requestDetails        String
+  requestedDate         DateTime?
+  fulfillmentPreference FulfillmentMethod?
+  budget                String?
+  status                CustomOrderRequestStatus @default(pending)
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @default(now()) @updatedAt
+  messages              CustomOrderRequestMessage[]
+
+  @@index([status, createdAt])
+}
+
+model CustomOrderRequestMessage {
+  id                   Int                @id @default(autoincrement())
+  customOrderRequestId Int
+  customOrderRequest   CustomOrderRequest @relation(fields: [customOrderRequestId], references: [id], onDelete: Cascade)
+  subject              String
+  message              String
+  sentByEmail          String
+  createdAt            DateTime           @default(now())
+
+  @@index([customOrderRequestId, createdAt])
 }
 
 model AdminAuditLog {
