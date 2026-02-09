@@ -9,6 +9,6 @@ if (!password) {
 
 const salt = randomBytes(16);
 const hash = scryptSync(password, salt, 64);
-const encoded = `scrypt$${salt.toString('hex')}$${hash.toString('hex')}`;
+const encoded = `scrypt|${salt.toString('hex')}|${hash.toString('hex')}`;
 
 console.log(encoded);

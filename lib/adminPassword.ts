@@ -10,11 +10,11 @@ function toHex(buffer: Buffer): string {
 export function hashAdminPassword(password: string): string {
   const salt = randomBytes(16);
   const hash = scryptSync(password, salt, KEY_LENGTH);
-  return `scrypt$${toHex(salt)}$${toHex(hash)}`;
+  return `scrypt|${toHex(salt)}|${toHex(hash)}`;
 }
 
 export function verifyAdminPassword(password: string, storedHash: string): boolean {
-  const parts = storedHash.split("$");
+  const parts = storedHash.split("|");
   if (parts.length !== 3 || parts[0] !== "scrypt") {
     return false;
   }
