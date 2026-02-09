@@ -4,6 +4,28 @@ import Link from "next/link";
 import { CartProvider } from "./components/CartProvider";
 import CartLink from "./components/CartLink";
 import FluidShaderBackground from "./components/FluidShaderBackground";
+import { Inter, Nunito, Poppins } from "next/font/google";
+
+const nunito = Nunito({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+  variable: "--font-nunito",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
+  variable: "--font-inter",
+});
+
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-poppins",
+});
 
 export const metadata: Metadata = {
   title: "Flour Haus",
@@ -16,14 +38,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${nunito.variable} ${inter.variable} ${poppins.variable}`}>
       <body className="antialiased min-h-screen">
         <FluidShaderBackground />
         <div className="relative z-10 min-h-screen flex flex-col">
           <CartProvider>
             <nav className="nav-glass sticky top-0 z-50">
               <div className="max-w-6xl mx-auto px-5 sm:px-6 py-4 flex justify-between items-center gap-4">
-                <Link href="/" className="font-bold text-xl tracking-wide brand-text [font-family:Poppins,sans-serif]">
+                <Link href="/" className="font-bold text-xl tracking-wide brand-text">
                   Flour Haus
                 </Link>
                 <div className="flex gap-4 sm:gap-7 items-center">
@@ -39,7 +61,7 @@ export default function RootLayout({
             <div className="max-w-6xl mx-auto px-6 py-14">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
                 <div>
-                  <h3 className="font-semibold text-lg mb-3 text-fh-heading [font-family:Poppins,sans-serif]">Flour Haus</h3>
+                  <h3 className="font-semibold text-lg mb-3 text-fh-heading">Flour Haus</h3>
                   <p className="text-[0.95rem] leading-relaxed text-fh-body">Homemade baked goods made with love in Miami. From classic cakes to fresh pastries, every bite is crafted with the finest ingredients.</p>
                 </div>
                 <div>
