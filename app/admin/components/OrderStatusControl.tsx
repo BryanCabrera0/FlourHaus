@@ -52,7 +52,8 @@ export default function OrderStatusControl({
         <select
           value={status}
           onChange={(event) => setStatus(event.target.value as OrderStatus)}
-          className="rounded-lg border border-[#E4D5C8] bg-white px-3 py-2 text-sm"
+          className="admin-input"
+          style={{ width: "auto", paddingRight: "32px" }}
           disabled={isSaving}
         >
           {ORDER_STATUSES.map((value) => (
@@ -65,7 +66,7 @@ export default function OrderStatusControl({
           type="button"
           onClick={handleSave}
           disabled={isSaving || status === currentStatus}
-          className="btn-primary text-xs py-2 px-3 disabled:opacity-50"
+          className="btn-primary text-xs py-2 px-4 disabled:opacity-50"
         >
           {isSaving ? "Saving..." : "Save"}
         </button>

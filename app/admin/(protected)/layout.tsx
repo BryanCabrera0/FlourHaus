@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAdminSessionFromCookieStore } from "@/lib/adminAuth";
 import AdminLogoutButton from "../components/AdminLogoutButton";
+import AdminNav from "../components/AdminNav";
 
 export default async function ProtectedAdminLayout({
   children,
@@ -15,28 +16,36 @@ export default async function ProtectedAdminLayout({
 
   return (
     <div className="min-h-screen bg-warm-gradient">
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        <header className="panel p-5 mb-8 flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em]" style={{ color: "#8B5E3C" }}>
-              Flour Haus Admin
-            </p>
-            <p className="text-sm mt-1" style={{ color: "#6B5740" }}>
-              Signed in as {session.email}
-            </p>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <header className="panel p-4 sm:p-5 mb-8 flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
+          <div className="flex items-center gap-3">
+            <div>
+              <p
+                className="text-xs uppercase tracking-[0.2em] font-semibold"
+                style={{ color: "#8B5E3C" }}
+              >
+                Flour Haus Admin
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: "#6B5740" }}>
+                {session.email}
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <Link href="/admin" className="btn-ghost py-2 px-4 text-xs">
-              Dashboard
-            </Link>
-            <Link href="/admin/orders" className="btn-ghost py-2 px-4 text-xs">
-              Orders
-            </Link>
-            <Link href="/admin/menu" className="btn-ghost py-2 px-4 text-xs">
-              Menu
+          <nav className="flex items-center gap-2 flex-wrap">
+            <AdminNav />
+            <span
+              className="hidden sm:block w-px h-5 mx-1"
+              style={{ background: "rgba(92,64,51,0.12)" }}
+            />
+            <Link
+              href="/"
+              className="btn-admin-nav py-2 px-3 text-xs"
+              style={{ fontSize: "0.7rem" }}
+            >
+              Back to site
             </Link>
             <AdminLogoutButton />
-          </div>
+          </nav>
         </header>
         {children}
       </div>

@@ -52,38 +52,39 @@ export default function AdminLoginForm({ nextPath }: AdminLoginFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="panel p-8 max-w-md mx-auto">
-      <h1 className="text-3xl font-bold mb-2" style={{ color: "#3D2B1F" }}>
-        Flour Haus Admin
-      </h1>
+    <form onSubmit={handleSubmit} className="panel p-8">
       <p className="text-sm mb-6" style={{ color: "#6B5740" }}>
         Sign in to manage orders and menu items.
       </p>
 
-      <label className="block text-sm font-semibold mb-2" style={{ color: "#3D2B1F" }}>
-        Email
-      </label>
-      <input
-        type="email"
-        required
-        value={email}
-        onChange={(event) => setEmail(event.target.value)}
-        className="w-full mb-4 rounded-xl border border-[#E4D5C8] bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#D9B08C]"
-      />
+      <div className="mb-4">
+        <label className="admin-label">Email</label>
+        <input
+          type="email"
+          required
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          className="admin-input"
+          placeholder="admin@flourhaus.com"
+        />
+      </div>
 
-      <label className="block text-sm font-semibold mb-2" style={{ color: "#3D2B1F" }}>
-        Password
-      </label>
-      <input
-        type="password"
-        required
-        value={password}
-        onChange={(event) => setPassword(event.target.value)}
-        className="w-full mb-6 rounded-xl border border-[#E4D5C8] bg-white px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#D9B08C]"
-      />
+      <div className="mb-6">
+        <label className="admin-label">Password</label>
+        <input
+          type="password"
+          required
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          className="admin-input"
+        />
+      </div>
 
       {error ? (
-        <p className="text-sm mb-4 p-3 rounded-lg" style={{ color: "#A0555E", backgroundColor: "rgba(160, 85, 94, 0.08)" }}>
+        <p
+          className="text-sm mb-4 p-3 rounded-lg"
+          style={{ color: "#A0555E", backgroundColor: "rgba(160, 85, 94, 0.08)" }}
+        >
           {error}
         </p>
       ) : null}

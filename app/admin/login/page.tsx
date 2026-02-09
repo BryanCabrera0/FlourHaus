@@ -34,7 +34,38 @@ export default async function AdminLoginPage({ searchParams }: AdminLoginPagePro
 
   return (
     <div className="min-h-screen bg-warm-gradient flex items-center justify-center px-6">
-      <AdminLoginForm nextPath={nextPath} />
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <div
+            className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4"
+            style={{ background: "linear-gradient(135deg, #C4926C 0%, #B07D58 100%)" }}
+          >
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#FFFFFF"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </div>
+          <h1
+            className="text-2xl font-bold"
+            style={{ color: "#3D2B1F", fontFamily: "Poppins, sans-serif" }}
+          >
+            Flour Haus
+          </h1>
+          <p className="text-sm mt-1" style={{ color: "#8B5E3C" }}>
+            Admin Portal
+          </p>
+        </div>
+        <AdminLoginForm nextPath={nextPath} />
+      </div>
     </div>
   );
 }

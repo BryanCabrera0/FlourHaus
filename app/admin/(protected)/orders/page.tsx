@@ -16,6 +16,20 @@ type OrdersPageProps = {
   searchParams: Promise<{ status?: string; fulfillment?: string }>;
 };
 
+const STATUS_BADGE: Record<string, string> = {
+  new: "badge badge-new",
+  paid: "badge badge-paid",
+  baking: "badge badge-baking",
+  ready: "badge badge-ready",
+  completed: "badge badge-completed",
+  canceled: "badge badge-canceled",
+};
+
+const FULFILLMENT_BADGE: Record<string, string> = {
+  pickup: "badge badge-pickup",
+  delivery: "badge badge-delivery",
+};
+
 function asOrderStatus(value: string | undefined): OrderStatus | undefined {
   if (!value) {
     return undefined;
@@ -69,23 +83,26 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
   return (
     <div className="space-y-6">
       <div className="panel p-6">
-        <h1 className="text-3xl font-bold mb-4" style={{ color: "#3D2B1F" }}>
+        <h1 className="text-3xl font-bold mb-5" style={{ color: "#3D2B1F" }}>
           Orders
         </h1>
         <div className="flex flex-col gap-4">
           <div>
             <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "#8B5E3C" }}>
-              Status Filter
+              Status
             </p>
             <div className="flex flex-wrap gap-2">
-              <Link href={getFilterHref({ fulfillment: fulfillmentFilter })} className="btn-ghost text-xs py-2 px-3">
+              <Link
+                href={getFilterHref({ fulfillment: fulfillmentFilter })}
+                className={!statusFilter ? "filter-chip-active" : "filter-chip"}
+              >
                 All
               </Link>
               {ORDER_STATUSES.map((status) => (
                 <Link
                   key={status}
                   href={getFilterHref({ status, fulfillment: fulfillmentFilter })}
-                  className="btn-ghost text-xs py-2 px-3"
+                  className={statusFilter === status ? "filter-chip-active" : "filter-chip"}
                 >
                   {status}
                 </Link>
@@ -94,17 +111,20 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
           </div>
           <div>
             <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "#8B5E3C" }}>
-              Fulfillment Filter
+              Fulfillment
             </p>
             <div className="flex flex-wrap gap-2">
-              <Link href={getFilterHref({ status: statusFilter })} className="btn-ghost text-xs py-2 px-3">
+              <Link
+                href={getFilterHref({ status: statusFilter })}
+                className={!fulfillmentFilter ? "filter-chip-active" : "filter-chip"}
+              >
                 All
               </Link>
               {FULFILLMENT_METHODS.map((fulfillment) => (
                 <Link
                   key={fulfillment}
                   href={getFilterHref({ status: statusFilter, fulfillment })}
-                  className="btn-ghost text-xs py-2 px-3"
+                  className={fulfillmentFilter === fulfillment ? "filter-chip-active" : "filter-chip"}
                 >
                   {fulfillment}
                 </Link>
@@ -123,31 +143,37 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
           {orders.map((order) => {
             const items = parseOrderItems(order.items);
             return (
-              <div key={order.id} className="panel p-5">
-                <div className="flex flex-col gap-4 md:flex-row md:justify-between">
-                  <div>
-                    <p className="text-lg font-semibold" style={{ color: "#3D2B1F" }}>
-                      Order #{order.id}
-                    </p>
+              <div key={order.id} className="panel p-0 overflow-hidden">
+                {/* Header row */}
+                <div className="p-5 flex flex-col gap-3 md:flex-row md:justify-between md:items-start">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-lg font-semibold" style={{ color: "#3D2B1F" }}>
+                        Order #{order.id}
+                      </p>
+                      <span className={STATUS_BADGE[order.status] ?? "badge"}>
+                        {order.status}
+                      </span>
+                      <span className={FULFILLMENT_BADGE[order.fulfillment as FulfillmentMethod] ?? "badge"}>
+                        {order.fulfillment}
+                      </span>
+                    </div>
                     <p className="text-sm" style={{ color: "#6B5740" }}>
                       {order.createdAt.toLocaleString()}
                     </p>
-                    <p className="text-sm mt-1" style={{ color: "#6B5740" }}>
-                      Fulfillment: {order.fulfillment}
-                    </p>
-                    <p className="text-sm" style={{ color: "#6B5740" }}>
-                      Stripe session: {order.stripeSessionId}
-                    </p>
+
+                    {/* Customer info */}
                     {order.customerName ? (
-                      <p className="text-sm" style={{ color: "#6B5740" }}>
-                        Customer: {order.customerName}
-                        {order.customerPhone ? ` (${order.customerPhone})` : ""}
-                      </p>
-                    ) : null}
-                    {order.notes ? (
-                      <p className="text-sm mt-1" style={{ color: "#6B5740" }}>
-                        Notes: {order.notes}
-                      </p>
+                      <div className="flex items-center gap-2 text-sm" style={{ color: "#5C4033" }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                          <circle cx="12" cy="7" r="4" />
+                        </svg>
+                        <span>
+                          {order.customerName}
+                          {order.customerPhone ? ` \u00b7 ${order.customerPhone}` : ""}
+                        </span>
+                      </div>
                     ) : null}
                   </div>
                   <OrderStatusControl
@@ -156,23 +182,47 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
                   />
                 </div>
 
-                <div className="mt-4 border-t border-[#ECDCCF] pt-4 space-y-1">
+                {/* Notes callout */}
+                {order.notes ? (
+                  <div className="mx-5 mb-4">
+                    <div className="notes-callout">
+                      <p className="text-xs uppercase tracking-wider mb-1 font-semibold" style={{ color: "#8B5E3C" }}>
+                        Notes
+                      </p>
+                      {order.notes}
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* Items section */}
+                <div className="border-t border-[#ECDCCF] px-5 py-4 space-y-1">
                   {items.length === 0 ? (
                     <p className="text-sm" style={{ color: "#6B5740" }}>
                       No line items captured.
                     </p>
                   ) : (
                     items.map((item) => (
-                      <p key={`${order.id}-${item.id}`} className="text-sm" style={{ color: "#3D2B1F" }}>
-                        {item.quantity}x {item.name} — {formatCurrency(item.price * item.quantity)}
-                      </p>
+                      <div
+                        key={`${order.id}-${item.id}`}
+                        className="flex justify-between text-sm"
+                      >
+                        <span style={{ color: "#3D2B1F" }}>
+                          {item.quantity}x {item.name}
+                        </span>
+                        <span style={{ color: "#6B5740" }}>
+                          {formatCurrency(item.price * item.quantity)}
+                        </span>
+                      </div>
                     ))
                   )}
                 </div>
 
-                <p className="mt-4 font-bold" style={{ color: "#8B5E3C" }}>
-                  Total: {formatCurrency(order.total)}
-                </p>
+                {/* Total */}
+                <div className="border-t border-[#ECDCCF] px-5 py-3 flex justify-end">
+                  <p className="font-bold text-lg" style={{ color: "#8B5E3C" }}>
+                    {formatCurrency(order.total)}
+                  </p>
+                </div>
               </div>
             );
           })}

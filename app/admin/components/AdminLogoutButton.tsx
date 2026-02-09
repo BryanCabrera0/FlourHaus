@@ -23,7 +23,7 @@ export default function AdminLogoutButton() {
       type="button"
       onClick={handleLogout}
       disabled={isLoggingOut}
-      className="btn-primary text-xs py-2 px-4 disabled:opacity-50"
+      className="btn-admin-logout text-xs py-2 px-4 disabled:opacity-50"
     >
       {isLoggingOut ? "Signing out..." : "Sign out"}
     </button>
