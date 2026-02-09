@@ -18,6 +18,27 @@ const ALLOWED_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif"]);
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
 
+function isLikelyLocalDatabase(connectionString: string | undefined): boolean {
+  if (!connectionString) {
+    return false;
+  }
+
+  let url: URL;
+  try {
+    url = new URL(connectionString);
+  } catch {
+    return false;
+  }
+
+  const protocol = url.protocol.toLowerCase();
+  if (protocol !== "postgres:" && protocol !== "postgresql:") {
+    return false;
+  }
+
+  const host = url.hostname.toLowerCase();
+  return host === "localhost" || host === "127.0.0.1" || host === "::1";
+}
+
 function resolveFileExtension(file: File): string | null {
   const mimeType = file.type.toLowerCase();
   if (mimeType === "image/jpeg") {
@@ -117,6 +138,18 @@ export async function POST(request: NextRequest) {
         token: blobToken,
       });
       return NextResponse.json({ url: blob.url });
+    }
+
+    // Local disk uploads are only safe if your DB is also local. Otherwise you end up
+    // storing "/uploads/..." paths in a shared remote DB, which will 404 in production.
+    if (!isLikelyLocalDatabase(process.env.DATABASE_URL)) {
+      return NextResponse.json(
+        {
+          error:
+            "Image uploads require BLOB_READ_WRITE_TOKEN. Your database appears to be remote, so local disk uploads would not be visible on the live site. Run `vercel env pull` or set BLOB_READ_WRITE_TOKEN locally.",
+        },
+        { status: 500 },
+      );
     }
 
     const localUrl = await uploadToLocalDisk(file, fileName);
