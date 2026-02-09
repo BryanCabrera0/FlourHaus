@@ -469,37 +469,22 @@
   position: relative;
   transition: all 0.35s ease;
 }
-.panel-hover-glow::before {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  padding: 1.5px;
-  background: rgba(186, 156, 230, 0.55);
-  opacity: 0;
-  transition: opacity 0.35s ease;
-  pointer-events: none;
-  z-index: 1;
-}
 .panel-hover-glow:hover {
   box-shadow:
-    0 4px 16px rgba(167, 139, 219, 0.12),
-    0 8px 32px rgba(140, 200, 232, 0.08);
-}
-.panel-hover-glow:hover::before {
-  opacity: 1;
+    0 4px 16px rgba(45, 40, 69, 0.08),
+    0 8px 32px rgba(45, 40, 69, 0.06);
 }
 
 /* ── Menu header panel ────────────────────── */
 .menu-header-panel {
-  background: #F7F3FC;
-  border-top: 3px solid #BAA0E6;
+  background: #FFFFFF;
+  border-top: 1px solid rgba(167, 139, 219, 0.18);
 }
 
 /* ── Add-form panel ───────────────────────── */
 .menu-add-panel {
-  background: #F4F8FD;
-  border-top: 3px solid #8CC8E8;
+  background: #FFFFFF;
+  border-top: 1px solid rgba(167, 139, 219, 0.18);
 }
 
 /* ── Item card pastel accent ──────────────── */
