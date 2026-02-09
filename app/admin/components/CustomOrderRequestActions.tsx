@@ -142,10 +142,8 @@ export default function CustomOrderRequestActions({
       </div>
 
       <div className="w-full md:w-[360px] bg-[#FFFDFC] rounded-xl border border-[#D5CCE5] p-4">
-        <p className="text-xs uppercase tracking-wider font-semibold mb-2" style={{ color: "#5E5485" }}>
-          Message Customer
-        </p>
-        <p className="text-xs mb-3" style={{ color: "#6B5D79" }}>
+        <p className="kicker kicker-accent mb-2">Message Customer</p>
+        <p className="text-xs mb-3 text-fh-muted">
           To: <span className="font-semibold">{customerName}</span> ({customerEmail})
         </p>
         <label className="admin-label">Subject</label>
@@ -166,7 +164,7 @@ export default function CustomOrderRequestActions({
           disabled={isSending || isSavingStatus}
           placeholder="Write a reply, ask follow-up questions, confirm pricing, etc."
         />
-        <label className="flex items-center gap-2 mt-3 text-xs" style={{ color: "#4A4068" }}>
+        <label className="flex items-center gap-2 mt-3 text-xs text-fh-body">
           <input
             type="checkbox"
             checked={includeStatus}
@@ -185,17 +183,12 @@ export default function CustomOrderRequestActions({
         </button>
 
         {error ? (
-          <p className="text-xs mt-3" style={{ color: "#C06070" }}>
-            {error}
-          </p>
+          <p className="text-xs mt-3 text-[#C06070]">{error}</p>
         ) : null}
         {success ? (
-          <p className="text-xs mt-3" style={{ color: "#2D7A52" }}>
-            {success}
-          </p>
+          <p className="text-xs mt-3 text-[#2D7A52]">{success}</p>
         ) : null}
       </div>
     </div>
   );
 }
-

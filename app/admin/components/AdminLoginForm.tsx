@@ -53,9 +53,7 @@ export default function AdminLoginForm({ nextPath }: AdminLoginFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="panel p-8">
-      <p className="text-sm mb-6" style={{ color: "#6B5D79" }}>
-        Sign in to manage orders and menu items.
-      </p>
+      <p className="text-sm mb-6 text-fh-muted">Sign in to manage orders and menu items.</p>
 
       <div className="mb-4">
         <label className="admin-label">Email</label>
@@ -81,10 +79,7 @@ export default function AdminLoginForm({ nextPath }: AdminLoginFormProps) {
       </div>
 
       {error ? (
-        <p
-          className="text-sm mb-4 p-3 rounded-lg"
-          style={{ color: "#C06070", backgroundColor: "rgba(192, 96, 112, 0.08)" }}
-        >
+        <p className="feedback-error text-sm mb-4 p-3 rounded-lg">
           {error}
         </p>
       ) : null}

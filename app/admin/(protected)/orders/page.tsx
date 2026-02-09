@@ -13,7 +13,7 @@ import OrderStatusControl from "../../components/OrderStatusControl";
 export const dynamic = "force-dynamic";
 
 type OrdersPageProps = {
-  searchParams: Promise<{ status?: string; fulfillment?: string }>;
+  searchParams: { status?: string; fulfillment?: string };
 };
 
 const STATUS_BADGE: Record<string, string> = {
@@ -67,9 +67,8 @@ function getFilterHref({
 }
 
 export default async function AdminOrdersPage({ searchParams }: OrdersPageProps) {
-  const params = await searchParams;
-  const statusFilter = asOrderStatus(params.status);
-  const fulfillmentFilter = asFulfillment(params.fulfillment);
+  const statusFilter = asOrderStatus(searchParams.status);
+  const fulfillmentFilter = asFulfillment(searchParams.fulfillment);
 
   const orders = await prisma.order.findMany({
     where: {
@@ -83,14 +82,10 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
   return (
     <div className="space-y-6">
       <div className="panel p-6">
-        <h1 className="text-3xl font-bold mb-5" style={{ color: "#40375F" }}>
-          Orders
-        </h1>
+        <h1 className="text-3xl font-bold mb-5 text-fh-heading">Orders</h1>
         <div className="flex flex-col gap-4">
           <div>
-            <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "#3F83B5" }}>
-              Status
-            </p>
+            <p className="kicker kicker-blue mb-2">Status</p>
             <div className="flex flex-wrap gap-2">
               <Link
                 href={getFilterHref({ fulfillment: fulfillmentFilter })}
@@ -110,9 +105,7 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
             </div>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "#4DAE8A" }}>
-              Fulfillment
-            </p>
+            <p className="kicker kicker-success mb-2">Fulfillment</p>
             <div className="flex flex-wrap gap-2">
               <Link
                 href={getFilterHref({ status: statusFilter })}
@@ -136,7 +129,7 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
 
       {orders.length === 0 ? (
         <div className="panel p-6">
-          <p style={{ color: "#6B5D79" }}>No orders match the current filters.</p>
+          <p className="text-fh-muted">No orders match the current filters.</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -148,23 +141,19 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
                 <div className="p-5 flex flex-col gap-3 md:flex-row md:justify-between md:items-start">
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-lg font-semibold" style={{ color: "#40375F" }}>
-                        Order #{order.id}
-                      </p>
+                      <p className="text-lg font-semibold text-fh-heading">Order #{order.id}</p>
                       <span className={STATUS_BADGE[order.status] ?? "badge"}>
                         {order.status}
                       </span>
-                      <span className={FULFILLMENT_BADGE[order.fulfillment as FulfillmentMethod] ?? "badge"}>
+                      <span className={FULFILLMENT_BADGE[order.fulfillment] ?? "badge"}>
                         {order.fulfillment}
                       </span>
                     </div>
-                    <p className="text-sm" style={{ color: "#6B5D79" }}>
-                      {order.createdAt.toLocaleString()}
-                    </p>
+                    <p className="text-sm text-fh-muted">{order.createdAt.toLocaleString()}</p>
 
                     {/* Customer info */}
                     {order.customerName ? (
-                      <div className="flex items-center gap-2 text-sm" style={{ color: "#463A55" }}>
+                      <div className="flex items-center gap-2 text-sm text-fh-body">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                           <circle cx="12" cy="7" r="4" />
@@ -186,9 +175,7 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
                 {order.notes ? (
                   <div className="mx-5 mb-4">
                     <div className="notes-callout">
-                      <p className="text-xs uppercase tracking-wider mb-1 font-semibold" style={{ color: "#3F83B5" }}>
-                        Notes
-                      </p>
+                      <p className="kicker kicker-blue mb-1">Notes</p>
                       {order.notes}
                     </div>
                   </div>
@@ -197,19 +184,17 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
                 {/* Items section */}
                 <div className="border-t border-[#D5CCE5] px-5 py-4 space-y-1">
                   {items.length === 0 ? (
-                    <p className="text-sm" style={{ color: "#6B5D79" }}>
-                      No line items captured.
-                    </p>
+                    <p className="text-sm text-fh-muted">No line items captured.</p>
                   ) : (
                     items.map((item) => (
                       <div
                         key={`${order.id}-${item.id}`}
                         className="flex justify-between text-sm"
                       >
-                        <span style={{ color: "#40375F" }}>
+                        <span className="text-fh-heading">
                           {item.quantity}x {item.name}
                         </span>
-                        <span style={{ color: "#6B5D79" }}>
+                        <span className="text-fh-muted">
                           {formatCurrency(item.price * item.quantity)}
                         </span>
                       </div>
@@ -219,9 +204,7 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
 
                 {/* Total */}
                 <div className="border-t border-[#D5CCE5] px-5 py-3 flex justify-end">
-                  <p className="font-bold text-lg" style={{ color: "#3F83B5" }}>
-                    {formatCurrency(order.total)}
-                  </p>
+                  <p className="font-bold text-lg text-fh-accent-blue">{formatCurrency(order.total)}</p>
                 </div>
               </div>
             );

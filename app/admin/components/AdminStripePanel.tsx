@@ -185,10 +185,10 @@ export default function AdminStripePanel() {
     <section className="panel p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-6">
         <div>
-          <h2 className="text-2xl font-bold mb-1" style={{ color: "#40375F" }}>
+          <h2 className="text-2xl font-bold mb-1 text-fh-heading">
             Stripe Payouts
           </h2>
-          <p className="text-sm" style={{ color: "#6B5D79" }}>
+          <p className="text-sm text-fh-muted">
             Link your Stripe account, monitor onboarding status, and review recent payouts.
           </p>
         </div>
@@ -203,16 +203,13 @@ export default function AdminStripePanel() {
       </div>
 
       {error ? (
-        <p
-          className="text-sm mb-4 p-3 rounded-lg"
-          style={{ color: "#C06070", backgroundColor: "rgba(192, 96, 112, 0.08)" }}
-        >
+        <p className="feedback-error text-sm mb-4 p-3 rounded-lg">
           {error}
         </p>
       ) : null}
 
       {isLoading && !status ? (
-        <p style={{ color: "#6B5D79" }}>Loading Stripe status...</p>
+        <p className="text-fh-muted">Loading Stripe status...</p>
       ) : null}
 
       {!isLoading && status ? (
@@ -220,7 +217,7 @@ export default function AdminStripePanel() {
           <div className="card p-4">
             {!status.account.linked ? (
               <div className="space-y-3">
-                <p style={{ color: "#6B5D79" }}>
+                <p className="text-fh-muted">
                   No Stripe account linked yet. Connect an account to receive payouts.
                 </p>
                 <button
@@ -246,11 +243,10 @@ export default function AdminStripePanel() {
                   </span>
                 </div>
 
-                <p className="text-sm" style={{ color: "#6B5D79" }}>
+                <p className="text-sm text-fh-muted">
                   Stripe Account:{" "}
                   <code
-                    className="px-1.5 py-0.5 rounded"
-                    style={{ backgroundColor: "rgba(91, 164, 212, 0.1)", color: "#40375F" }}
+                    className="px-1.5 py-0.5 rounded bg-[rgba(91,164,212,0.1)] text-fh-heading"
                   >
                     {status.account.id}
                   </code>
@@ -258,8 +254,7 @@ export default function AdminStripePanel() {
 
                 {status.account.requirementsDue.length > 0 ? (
                   <div
-                    className="text-sm p-3 rounded-lg"
-                    style={{ color: "#8A5020", backgroundColor: "rgba(224, 160, 64, 0.12)" }}
+                    className="text-sm p-3 rounded-lg text-[#8A5020] bg-[rgba(224,160,64,0.12)]"
                   >
                     <p className="font-semibold mb-1">Stripe still needs:</p>
                     <ul className="list-disc pl-5 space-y-1">
@@ -294,20 +289,16 @@ export default function AdminStripePanel() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="card p-4">
-              <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "#3D9E7A" }}>
-                Available Balance
-              </p>
-              <p className="text-2xl font-bold" style={{ color: "#40375F" }}>
+              <p className="kicker kicker-success mb-2">Available Balance</p>
+              <p className="text-2xl font-bold text-fh-heading">
                 {status.balances
                   ? formatMoney(status.balances.available, status.balances.currency)
                   : "—"}
               </p>
             </div>
             <div className="card p-4">
-              <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "#40A8A0" }}>
-                Pending Balance
-              </p>
-              <p className="text-2xl font-bold" style={{ color: "#40375F" }}>
+              <p className="kicker mb-2 text-[#40A8A0]">Pending Balance</p>
+              <p className="text-2xl font-bold text-fh-heading">
                 {status.balances
                   ? formatMoney(status.balances.pending, status.balances.currency)
                   : "—"}
@@ -317,16 +308,12 @@ export default function AdminStripePanel() {
 
           <div className="card p-4">
             <div className="flex justify-between items-center mb-3">
-              <h3 className="font-semibold" style={{ color: "#40375F" }}>
-                Recent Payouts
-              </h3>
-              <span className="text-xs" style={{ color: "#5E5485" }}>
-                Last {status.payouts.length}
-              </span>
+              <h3 className="font-semibold text-fh-heading">Recent Payouts</h3>
+              <span className="text-xs text-fh-muted">Last {status.payouts.length}</span>
             </div>
 
             {status.payouts.length === 0 ? (
-              <p className="text-sm" style={{ color: "#6B5D79" }}>
+              <p className="text-sm text-fh-muted">
                 No payouts yet. Stripe payouts will appear here once processing starts.
               </p>
             ) : (
@@ -337,16 +324,14 @@ export default function AdminStripePanel() {
                     className="border border-[#D5CCE5] rounded-lg px-3 py-2 flex flex-col gap-1 md:flex-row md:items-center md:justify-between"
                   >
                     <div>
-                      <p className="font-medium" style={{ color: "#40375F" }}>
+                      <p className="font-medium text-fh-heading">
                         {formatMoney(payout.amount, payout.currency)}
                       </p>
-                      <p className="text-xs" style={{ color: "#5E5485" }}>
-                        Arrival: {formatDate(payout.arrivalDate)}
-                      </p>
+                      <p className="text-xs text-fh-muted">Arrival: {formatDate(payout.arrivalDate)}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className={payoutStatusBadge(payout.status)}>{payout.status}</span>
-                      <span className="text-xs" style={{ color: "#6B5D79" }}>
+                      <span className="text-xs text-fh-muted">
                         {payout.method ?? "standard"}
                       </span>
                     </div>
