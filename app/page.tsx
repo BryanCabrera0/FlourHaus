@@ -6,7 +6,7 @@ import CustomOrderRequestForm from "./components/CustomOrderRequestForm";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const menuItems = await prisma.menuItem.findMany({
+  const featuredItems = await prisma.menuItem.findMany({
     select: {
       id: true,
       name: true,
@@ -14,10 +14,30 @@ export default async function HomePage() {
       price: true,
       imageUrl: true,
     },
-    where: { isActive: true },
-    orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+    where: { isActive: true, isFeatured: true },
+    orderBy: [
+      { featuredSortOrder: "asc" },
+      { sortOrder: "asc" },
+      { id: "asc" },
+    ],
     take: 6,
   });
+
+  const menuItems =
+    featuredItems.length > 0
+      ? featuredItems
+      : await prisma.menuItem.findMany({
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            price: true,
+            imageUrl: true,
+          },
+          where: { isActive: true },
+          orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+          take: 6,
+        });
 
   return (
     <div className="bg-surface">

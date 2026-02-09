@@ -12,6 +12,8 @@ type AdminMenuItem = {
   imageUrl: string | null;
   isActive: boolean;
   sortOrder: number;
+  isFeatured: boolean;
+  featuredSortOrder: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -23,6 +25,8 @@ type MenuDraft = {
   price: string;
   imageUrl: string;
   sortOrder: string;
+  isFeatured: boolean;
+  featuredSortOrder: string;
   isActive: boolean;
 };
 
@@ -51,6 +55,8 @@ function toDraft(item: AdminMenuItem): MenuDraft {
     price: item.price.toString(),
     imageUrl: item.imageUrl ?? "",
     sortOrder: item.sortOrder.toString(),
+    isFeatured: item.isFeatured,
+    featuredSortOrder: item.featuredSortOrder.toString(),
     isActive: item.isActive,
   };
 }
@@ -275,6 +281,8 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
     price: "0",
     imageUrl: "",
     sortOrder: "0",
+    isFeatured: false,
+    featuredSortOrder: "0",
     isActive: true,
   });
   const [isCreating, setIsCreating] = useState(false);
@@ -437,8 +445,19 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
 
     const price = parsePrice(createForm.price);
     const sortOrder = parseSortOrder(createForm.sortOrder);
-    if (!createForm.name.trim() || !createForm.description.trim() || !createForm.category.trim() || price === null || sortOrder === null) {
-      setError("Name, description, category, valid price, and valid display order are required.");
+    const featuredSortOrder = createForm.isFeatured
+      ? parseSortOrder(createForm.featuredSortOrder)
+      : 0;
+
+    if (
+      !createForm.name.trim() ||
+      !createForm.description.trim() ||
+      !createForm.category.trim() ||
+      price === null ||
+      sortOrder === null ||
+      featuredSortOrder === null
+    ) {
+      setError("Name, description, category, valid price, and valid order values are required.");
       return;
     }
 
@@ -455,6 +474,8 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
           imageUrl: createForm.imageUrl,
           sortOrder,
           isActive: createForm.isActive,
+          isFeatured: createForm.isFeatured,
+          featuredSortOrder,
         }),
       });
 
@@ -476,6 +497,8 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
         price: "0",
         imageUrl: "",
         sortOrder: "0",
+        isFeatured: false,
+        featuredSortOrder: "0",
         isActive: true,
       });
       setMessage(`Created "${created.name}".`);
@@ -499,8 +522,17 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
 
     const price = parsePrice(draft.price);
     const sortOrder = parseSortOrder(draft.sortOrder);
-    if (!draft.name.trim() || !draft.description.trim() || !draft.category.trim() || price === null || sortOrder === null) {
-      setError("Name, description, category, valid price, and valid display order are required.");
+    const featuredSortOrder = draft.isFeatured ? parseSortOrder(draft.featuredSortOrder) : 0;
+
+    if (
+      !draft.name.trim() ||
+      !draft.description.trim() ||
+      !draft.category.trim() ||
+      price === null ||
+      sortOrder === null ||
+      featuredSortOrder === null
+    ) {
+      setError("Name, description, category, valid price, and valid order values are required.");
       return;
     }
 
@@ -517,6 +549,8 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
           imageUrl: draft.imageUrl,
           sortOrder,
           isActive: draft.isActive,
+          isFeatured: draft.isFeatured,
+          featuredSortOrder,
         }),
       });
 
@@ -721,6 +755,77 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
     setIsBulkWorking(false);
   }
 
+  async function handleBulkSetFeatured(nextFeatured: boolean) {
+    if (isBulkWorking || selectedIds.size === 0) {
+      return;
+    }
+
+    const itemsById = new Map(items.map((item) => [item.id, item]));
+    const targetIds = Array.from(selectedIds).filter((id) => {
+      const item = itemsById.get(id);
+      return item && item.isFeatured !== nextFeatured;
+    });
+
+    if (targetIds.length === 0) {
+      setError(null);
+      setMessage(
+        nextFeatured
+          ? "Selected items are already featured."
+          : "Selected items are already not featured.",
+      );
+      return;
+    }
+
+    setIsBulkWorking(true);
+    setError(null);
+    setMessage(null);
+    setBusyMany(targetIds, true);
+
+    const updated: AdminMenuItem[] = [];
+    const failures: { id: number; error: string }[] = [];
+
+    for (const id of targetIds) {
+      try {
+        updated.push(await requestMenuUpdate(id, { isFeatured: nextFeatured }));
+      } catch (err) {
+        failures.push({
+          id,
+          error: err instanceof Error ? err.message : "Failed to update menu item.",
+        });
+      }
+    }
+
+    if (updated.length > 0) {
+      const updatedById = new Map(updated.map((item) => [item.id, item]));
+      setItems((prev) =>
+        sortItems(prev.map((item) => updatedById.get(item.id) ?? item)),
+      );
+      setDrafts((prev) => {
+        const next = { ...prev };
+        for (const item of updated) {
+          next[item.id] = toDraft(item);
+        }
+        return next;
+      });
+
+      setMessage(
+        nextFeatured
+          ? `Featured ${formatCount(updated.length, "item")}.`
+          : `Unfeatured ${formatCount(updated.length, "item")}.`,
+      );
+    }
+
+    if (failures.length > 0) {
+      const first = failures[0];
+      setError(
+        `Failed to update ${formatCount(failures.length, "item")}. First error: (#${first.id}) ${first.error}`,
+      );
+    }
+
+    setBusyMany(targetIds, false);
+    setIsBulkWorking(false);
+  }
+
   async function handleBulkDelete() {
     if (isBulkWorking || selectedIds.size === 0) {
       return;
@@ -862,6 +967,21 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                     placeholder="1 = first, 10 = later"
                   />
                 </div>
+                <div>
+                  <label className="admin-label">Featured Order</label>
+                  <input
+                    value={createForm.featuredSortOrder}
+                    onChange={(event) =>
+                      setCreateForm((prev) => ({ ...prev, featuredSortOrder: event.target.value }))
+                    }
+                    className="admin-input"
+                    placeholder="0 = first"
+                    disabled={!createForm.isFeatured}
+                  />
+                  <p className="text-xs mt-1 text-fh-muted">
+                    Only used when featured.
+                  </p>
+                </div>
                 <div className="md:col-span-2">
                   <ImageUploadField
                     value={createForm.imageUrl}
@@ -880,16 +1000,28 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                 </div>
               </div>
               <div className="mt-4 flex items-center justify-between gap-4 flex-wrap">
-                <label className="text-sm flex items-center gap-2 text-fh-muted">
-                  <input
-                    type="checkbox"
-                    checked={createForm.isActive}
-                    onChange={(event) =>
-                      setCreateForm((prev) => ({ ...prev, isActive: event.target.checked }))
-                    }
-                  />
-                  Item is active
-                </label>
+                <div className="flex items-center gap-4 flex-wrap">
+                  <label className="text-sm flex items-center gap-2 text-fh-muted">
+                    <input
+                      type="checkbox"
+                      checked={createForm.isActive}
+                      onChange={(event) =>
+                        setCreateForm((prev) => ({ ...prev, isActive: event.target.checked }))
+                      }
+                    />
+                    Item is active
+                  </label>
+                  <label className="text-sm flex items-center gap-2 text-fh-muted">
+                    <input
+                      type="checkbox"
+                      checked={createForm.isFeatured}
+                      onChange={(event) =>
+                        setCreateForm((prev) => ({ ...prev, isFeatured: event.target.checked }))
+                      }
+                    />
+                    Featured on home page
+                  </label>
+                </div>
                 <button
                   type="button"
                   onClick={handleCreate}
@@ -976,27 +1108,43 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                   >
                     Clear
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => void handleBulkSetActive(true)}
-                    disabled={bulkActionsDisabled}
-                    className="btn-admin-nav text-xs py-2 px-3 disabled:opacity-50"
-                  >
-                    Activate
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void handleBulkSetActive(false)}
-                    disabled={bulkActionsDisabled}
-                    className="btn-admin-nav text-xs py-2 px-3 disabled:opacity-50"
-                  >
-                    Archive
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void handleBulkDelete()}
-                    disabled={bulkActionsDisabled}
-                    className="btn-remove text-xs py-2 px-3 disabled:opacity-50"
+                <button
+                  type="button"
+                  onClick={() => void handleBulkSetActive(true)}
+                  disabled={bulkActionsDisabled}
+                  className="btn-admin-nav text-xs py-2 px-3 disabled:opacity-50"
+                >
+                  Activate
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleBulkSetActive(false)}
+                  disabled={bulkActionsDisabled}
+                  className="btn-admin-nav text-xs py-2 px-3 disabled:opacity-50"
+                >
+                  Archive
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleBulkSetFeatured(true)}
+                  disabled={bulkActionsDisabled}
+                  className="btn-admin-nav text-xs py-2 px-3 disabled:opacity-50"
+                >
+                  Feature
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleBulkSetFeatured(false)}
+                  disabled={bulkActionsDisabled}
+                  className="btn-admin-nav text-xs py-2 px-3 disabled:opacity-50"
+                >
+                  Unfeature
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleBulkDelete()}
+                  disabled={bulkActionsDisabled}
+                  className="btn-remove text-xs py-2 px-3 disabled:opacity-50"
                   >
                     Delete
                   </button>
@@ -1106,6 +1254,11 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                                     <span className="price-pill text-xs font-semibold px-2 py-0.5 rounded-full">
                                       {formatCurrency(item.price)}
                                     </span>
+                                    {item.isFeatured ? (
+                                      <span className="accent-mint text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                                        Featured
+                                      </span>
+                                    ) : null}
                                     {item.isActive ? (
                                       <span className="status-active inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full">
                                         <span className="w-1.5 h-1.5 rounded-full bg-[#4CAF7D]" />
@@ -1120,6 +1273,7 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                                   </div>
                                   <p className="text-sm text-fh-muted">{descriptionPreview}</p>
                                   <p className="text-xs text-fh-muted">
+                                    {item.isFeatured ? `Featured order ${item.featuredSortOrder} \u00b7 ` : ""}
                                     Display order {item.sortOrder} &middot; Updated{" "}
                                     {new Date(item.updatedAt).toLocaleString()}
                                   </p>
@@ -1202,6 +1356,20 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                                       className="admin-input"
                                     />
                                   </div>
+                                  <div>
+                                    <label className="admin-label">Featured Order</label>
+                                    <input
+                                      value={draft.featuredSortOrder}
+                                      onChange={(event) =>
+                                        setDraftValue(item.id, "featuredSortOrder", event.target.value)
+                                      }
+                                      className="admin-input"
+                                      disabled={!draft.isFeatured}
+                                    />
+                                    <p className="text-xs mt-1 text-fh-muted">
+                                      Only used when featured.
+                                    </p>
+                                  </div>
                                   <div className="md:col-span-2">
                                     <ImageUploadField
                                       value={draft.imageUrl}
@@ -1222,16 +1390,28 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                                 </div>
 
                                 <div className="mt-4 flex justify-between items-center gap-4 flex-wrap">
-                                  <label className="text-sm flex items-center gap-2 text-fh-muted">
-                                    <input
-                                      type="checkbox"
-                                      checked={draft.isActive}
-                                      onChange={(event) =>
-                                        setDraftValue(item.id, "isActive", event.target.checked)
-                                      }
-                                    />
-                                    Item is active
-                                  </label>
+                                  <div className="flex items-center gap-4 flex-wrap">
+                                    <label className="text-sm flex items-center gap-2 text-fh-muted">
+                                      <input
+                                        type="checkbox"
+                                        checked={draft.isActive}
+                                        onChange={(event) =>
+                                          setDraftValue(item.id, "isActive", event.target.checked)
+                                        }
+                                      />
+                                      Item is active
+                                    </label>
+                                    <label className="text-sm flex items-center gap-2 text-fh-muted">
+                                      <input
+                                        type="checkbox"
+                                        checked={draft.isFeatured}
+                                        onChange={(event) =>
+                                          setDraftValue(item.id, "isFeatured", event.target.checked)
+                                        }
+                                      />
+                                      Featured on home page
+                                    </label>
+                                  </div>
                                   <button
                                     type="button"
                                     onClick={() => handleSave(item.id)}

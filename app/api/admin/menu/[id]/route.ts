@@ -12,6 +12,8 @@ type UpdateMenuItemBody = {
   imageUrl?: unknown;
   isActive?: unknown;
   sortOrder?: unknown;
+  isFeatured?: unknown;
+  featuredSortOrder?: unknown;
 };
 
 function normalizeOptionalImageUrl(value: unknown): string | null | undefined {
@@ -97,11 +99,29 @@ function parseUpdateBody(body: UpdateMenuItemBody | null) {
     updateData.sortOrder = sortOrder;
   }
 
+  if (body.featuredSortOrder !== undefined) {
+    const featuredSortOrder =
+      typeof body.featuredSortOrder === "number"
+        ? body.featuredSortOrder
+        : Number(body.featuredSortOrder);
+    if (!Number.isInteger(featuredSortOrder)) {
+      return null;
+    }
+    updateData.featuredSortOrder = featuredSortOrder;
+  }
+
   if (body.isActive !== undefined) {
     if (typeof body.isActive !== "boolean") {
       return null;
     }
     updateData.isActive = body.isActive;
+  }
+
+  if (body.isFeatured !== undefined) {
+    if (typeof body.isFeatured !== "boolean") {
+      return null;
+    }
+    updateData.isFeatured = body.isFeatured;
   }
 
   if (body.imageUrl !== undefined) {

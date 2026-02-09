@@ -12,6 +12,8 @@ type CreateMenuItemBody = {
   imageUrl?: unknown;
   isActive?: unknown;
   sortOrder?: unknown;
+  isFeatured?: unknown;
+  featuredSortOrder?: unknown;
 };
 
 function normalizeOptionalImageUrl(value: unknown): string | null {
@@ -49,6 +51,11 @@ function parseCreateBody(body: CreateMenuItemBody | null) {
   const sortOrderRaw =
     typeof body?.sortOrder === "number" ? body.sortOrder : Number(body?.sortOrder);
   const sortOrder = Number.isInteger(sortOrderRaw) ? sortOrderRaw : 0;
+  const featuredSortOrderRaw =
+    typeof body?.featuredSortOrder === "number"
+      ? body.featuredSortOrder
+      : Number(body?.featuredSortOrder);
+  const featuredSortOrder = Number.isInteger(featuredSortOrderRaw) ? featuredSortOrderRaw : 0;
 
   if (!name || !description || !category || !Number.isFinite(price) || price < 0) {
     return null;
@@ -62,6 +69,8 @@ function parseCreateBody(body: CreateMenuItemBody | null) {
     imageUrl: normalizeOptionalImageUrl(body?.imageUrl),
     isActive: typeof body?.isActive === "boolean" ? body.isActive : true,
     sortOrder,
+    isFeatured: typeof body?.isFeatured === "boolean" ? body.isFeatured : false,
+    featuredSortOrder,
   };
 }
 
@@ -109,6 +118,8 @@ export async function POST(request: NextRequest) {
             name: menuItem.name,
             category: menuItem.category,
             price: menuItem.price,
+            isActive: menuItem.isActive,
+            isFeatured: menuItem.isFeatured,
           }),
           actorEmail: auth.session.email,
         },
