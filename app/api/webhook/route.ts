@@ -21,7 +21,10 @@ export async function POST(request: Request) {
 
   if (!webhookSecret || !stripe) {
     return NextResponse.json(
-      { error: "Server misconfiguration: missing STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET" },
+      {
+        error:
+          "Server misconfiguration: missing STRIPE_SECRET_KEY (or STRIPE_PLATFORM_SECRET_KEY) or STRIPE_WEBHOOK_SECRET",
+      },
       { status: 500 }
     );
   }

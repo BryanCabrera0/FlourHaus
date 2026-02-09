@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type Stripe from "stripe";
 import prisma from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/adminApi";
-import { getBaseUrl, getStripeClient } from "@/lib/stripe";
+import { getBaseUrl, getStripeClient, readStripeSecretKey } from "@/lib/stripe";
 
 export const runtime = "nodejs";
 
@@ -39,10 +39,32 @@ export async function POST(request: NextRequest) {
     return auth.response;
   }
 
+  const stripeKey = readStripeSecretKey();
+  if (!stripeKey) {
+    return NextResponse.json(
+      { error: "Server misconfiguration: missing STRIPE_SECRET_KEY (or STRIPE_PLATFORM_SECRET_KEY)." },
+      { status: 500 }
+    );
+  }
+
+  if (stripeKey.key.startsWith("pk_")) {
+    return NextResponse.json(
+      { error: `Server misconfiguration: ${stripeKey.source} must be a secret key (sk_...), not a publishable key (pk_...).` },
+      { status: 500 }
+    );
+  }
+
+  if (stripeKey.key.startsWith("rk_")) {
+    return NextResponse.json(
+      { error: `Server misconfiguration: ${stripeKey.source} must be a full secret key (sk_...), not a restricted key (rk_...). Stripe Connect onboarding requires a standard secret key.` },
+      { status: 500 }
+    );
+  }
+
   const stripe = getStripeClient();
   if (!stripe) {
     return NextResponse.json(
-      { error: "Server misconfiguration: missing STRIPE_SECRET_KEY." },
+      { error: "Server misconfiguration: missing STRIPE_SECRET_KEY (or STRIPE_PLATFORM_SECRET_KEY)." },
       { status: 500 }
     );
   }
@@ -56,9 +78,10 @@ export async function POST(request: NextRequest) {
   let resolved: { accountId: string; created: boolean };
   try {
     resolved = await resolveStripeAccountId(stripe, settings.stripeAccountId);
-  } catch {
+  } catch (error) {
+    const details = error instanceof Error && error.message ? ` ${error.message}` : "";
     return NextResponse.json(
-      { error: "Unable to create a Stripe account right now." },
+      { error: `Unable to create or retrieve a Stripe Connect account.${details}` },
       { status: 502 }
     );
   }
@@ -111,9 +134,10 @@ export async function POST(request: NextRequest) {
       stripeAccountId: resolved.accountId,
       url: accountLink.url,
     });
-  } catch {
+  } catch (error) {
+    const details = error instanceof Error && error.message ? ` ${error.message}` : "";
     return NextResponse.json(
-      { error: "Unable to generate Stripe onboarding link." },
+      { error: `Unable to generate Stripe onboarding link.${details}` },
       { status: 502 }
     );
   }

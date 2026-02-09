@@ -39,16 +39,16 @@ App runs at `http://localhost:3000`.
 ## Required Env Vars
 
 - `DATABASE_URL`
-- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
-- `STRIPE_SECRET_KEY`
+- `STRIPE_SECRET_KEY` (or `STRIPE_PLATFORM_SECRET_KEY`)
 - `STRIPE_WEBHOOK_SECRET`
-- `NEXT_PUBLIC_BASE_URL`
 - `ADMIN_EMAIL`
 - `ADMIN_PASSWORD_HASH`
 - `ADMIN_SESSION_SECRET`
 
 ## Optional Env Vars
 
+- `NEXT_PUBLIC_BASE_URL` canonical site URL used when building Stripe redirect URLs.
+  - If omitted, the app falls back to the request origin / Vercel deployment URL.
 - `BLOB_READ_WRITE_TOKEN` (recommended) for Vercel Blob image uploads.
   - If not set, admin image uploads fall back to local disk at `public/uploads/menu-images` (works only on writable Node runtimes; not reliable on Vercel).
 - `RESEND_API_KEY` + `RESEND_FROM_EMAIL` for custom order notifications and admin replies.

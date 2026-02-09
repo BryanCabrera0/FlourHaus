@@ -72,7 +72,10 @@ export async function POST(request: Request) {
 
   const stripe = getStripeClient();
   if (!stripe) {
-    return NextResponse.json({ error: "Server misconfiguration: missing STRIPE_SECRET_KEY" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Server misconfiguration: missing STRIPE_SECRET_KEY (or STRIPE_PLATFORM_SECRET_KEY)" },
+      { status: 500 }
+    );
   }
 
   const baseUrl = getBaseUrl(request);
@@ -117,6 +120,18 @@ export async function POST(request: Request) {
       };
     });
 
+    const settings = await prisma.storeSettings.upsert({
+      where: { id: 1 },
+      create: { id: 1 },
+      update: {},
+      select: { stripeAccountId: true },
+    });
+
+    const connectedAccountId =
+      typeof settings.stripeAccountId === "string" && settings.stripeAccountId.trim()
+        ? settings.stripeAccountId.trim()
+        : null;
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: normalizedItems.map((item) => ({
@@ -129,6 +144,15 @@ export async function POST(request: Request) {
         },
         quantity: item.quantity,
       })),
+      ...(connectedAccountId
+        ? {
+            // Route payouts to the connected Stripe account when configured.
+            payment_intent_data: {
+              on_behalf_of: connectedAccountId,
+              transfer_data: { destination: connectedAccountId },
+            },
+          }
+        : {}),
       metadata: {
         fulfillment: payload.fulfillment,
         items: JSON.stringify(normalizedItems),
