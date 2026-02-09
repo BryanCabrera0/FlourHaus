@@ -5,21 +5,6 @@ import CustomOrderRequestForm from "./components/CustomOrderRequestForm";
 
 export const dynamic = "force-dynamic";
 
-const HIGHLIGHTS = [
-  {
-    title: "Baked In Small Batches",
-    detail: "Fresh pastries and cakes prepared daily with a handmade touch.",
-  },
-  {
-    title: "Warm Pastel Presentation",
-    detail: "Cozy, elevated desserts crafted to look as beautiful as they taste.",
-  },
-  {
-    title: "Pickup Or Delivery",
-    detail: "Convenient options across Miami for every celebration or craving.",
-  },
-] as const;
-
 export default async function HomePage() {
   const menuItems = await prisma.menuItem.findMany({
     select: {
@@ -54,28 +39,10 @@ export default async function HomePage() {
             <Link href="/menu" className="btn-primary py-3.5 px-9 text-sm">
               Order Now
             </Link>
-            <Link href="/about" className="btn-ghost py-3.5 px-9 text-sm">
-              Our Story
-            </Link>
             <a href="#custom-order" className="btn-pastel-primary py-3.5 px-9 text-sm">
               Custom Order
             </a>
           </div>
-        </div>
-      </section>
-
-      <section className="bg-surface">
-        <div className="max-w-6xl mx-auto px-6 py-14 grid grid-cols-1 md:grid-cols-3 gap-6">
-          {HIGHLIGHTS.map((highlight) => (
-            <article key={highlight.title} className="panel p-6 text-center">
-              <h2 className="text-lg font-semibold mb-2 text-fh-body">
-                {highlight.title}
-              </h2>
-              <p className="text-sm leading-relaxed text-fh-muted">
-                {highlight.detail}
-              </p>
-            </article>
-          ))}
         </div>
       </section>
 
