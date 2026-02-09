@@ -2,7 +2,7 @@ import Link from "next/link";
 import prisma from "@/app/lib/prisma";
 import { formatCurrency } from "@/app/lib/format";
 import { parseOrderItems } from "@/lib/orderItems";
-import type { OrderStatus, FulfillmentMethod } from "@/app/lib/types";
+import type { FulfillmentMethod } from "@/app/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -50,36 +50,36 @@ export default async function AdminDashboardPage() {
     <div className="space-y-8">
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <div className="stat-card stat-card-amber p-6">
-          <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "#8B5E3C" }}>
+          <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "#C08A30" }}>
             Orders Today
           </p>
-          <p className="text-3xl font-bold" style={{ color: "#3D2B1F" }}>
+          <p className="text-3xl font-bold" style={{ color: "#332B52" }}>
             {todaysOrders}
           </p>
         </div>
         <div className="stat-card stat-card-green p-6">
-          <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "#8B5E3C" }}>
+          <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "#3D9E7A" }}>
             Open Orders
           </p>
-          <p className="text-3xl font-bold" style={{ color: "#3D2B1F" }}>
+          <p className="text-3xl font-bold" style={{ color: "#332B52" }}>
             {openOrders}
           </p>
         </div>
         <div className="stat-card stat-card-teal p-6">
-          <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "#8B5E3C" }}>
+          <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "#40A8A0" }}>
             Revenue Today
           </p>
-          <p className="text-3xl font-bold" style={{ color: "#3D2B1F" }}>
+          <p className="text-3xl font-bold" style={{ color: "#332B52" }}>
             {formatCurrency(revenue)}
           </p>
         </div>
-        <div className="stat-card p-6">
-          <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "#8B5E3C" }}>
+        <div className="stat-card stat-card-rose p-6">
+          <p className="text-xs uppercase tracking-wider mb-2" style={{ color: "#D06080" }}>
             Active Menu Items
           </p>
-          <p className="text-3xl font-bold" style={{ color: "#3D2B1F" }}>
+          <p className="text-3xl font-bold" style={{ color: "#332B52" }}>
             {activeMenuItems}
-            <span className="text-lg font-normal" style={{ color: "#8B5E3C" }}>
+            <span className="text-lg font-normal" style={{ color: "#8B7EB0" }}>
               {" "}/ {totalMenuItems}
             </span>
           </p>
@@ -88,7 +88,7 @@ export default async function AdminDashboardPage() {
 
       <section className="panel p-6">
         <div className="flex justify-between items-center mb-5">
-          <h2 className="text-2xl font-bold" style={{ color: "#3D2B1F" }}>
+          <h2 className="text-2xl font-bold" style={{ color: "#332B52" }}>
             Recent Orders
           </h2>
           <Link href="/admin/orders" className="btn-primary py-2 px-4 text-xs">
@@ -97,7 +97,7 @@ export default async function AdminDashboardPage() {
         </div>
 
         {totalOrders === 0 ? (
-          <p style={{ color: "#6B5740" }}>No orders yet.</p>
+          <p style={{ color: "#5E5580" }}>No orders yet.</p>
         ) : (
           <div className="space-y-3">
             {recentOrders.map((order) => {
@@ -107,11 +107,11 @@ export default async function AdminDashboardPage() {
               return (
                 <div
                   key={order.id}
-                  className="bg-white rounded-xl border border-[#ECDCCF] p-4 flex flex-col md:flex-row md:justify-between gap-3"
+                  className="bg-white rounded-xl border border-[#E0D8F0] p-4 flex flex-col md:flex-row md:justify-between gap-3"
                 >
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-semibold" style={{ color: "#3D2B1F" }}>
+                      <p className="font-semibold" style={{ color: "#332B52" }}>
                         Order #{order.id}
                       </p>
                       <span className={STATUS_BADGE[order.status] ?? "badge"}>
@@ -121,12 +121,12 @@ export default async function AdminDashboardPage() {
                         {order.fulfillment}
                       </span>
                     </div>
-                    <p className="text-sm" style={{ color: "#6B5740" }}>
+                    <p className="text-sm" style={{ color: "#5E5580" }}>
                       {order.createdAt.toLocaleString()} &middot; {itemCount} item
                       {itemCount === 1 ? "" : "s"}
                     </p>
                   </div>
-                  <div className="font-bold self-start md:self-center text-lg" style={{ color: "#8B5E3C" }}>
+                  <div className="font-bold self-start md:self-center text-lg" style={{ color: "#5BA4D4" }}>
                     {formatCurrency(order.total)}
                   </div>
                 </div>
@@ -136,50 +136,6 @@ export default async function AdminDashboardPage() {
         )}
       </section>
 
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <Link
-          href="/admin/orders"
-          className="panel p-6 block group hover:border-[rgba(196,146,108,0.3)] transition-all"
-        >
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="text-xl font-semibold mb-2" style={{ color: "#3D2B1F" }}>
-                Orders Queue
-              </h3>
-              <p style={{ color: "#6B5740" }}>
-                Update status from new to completed and keep fulfillment moving.
-              </p>
-            </div>
-            <span
-              className="text-xl mt-1 opacity-40 group-hover:opacity-70 group-hover:translate-x-1 transition-all"
-              style={{ color: "#8B5E3C" }}
-            >
-              &rarr;
-            </span>
-          </div>
-        </Link>
-        <Link
-          href="/admin/menu"
-          className="panel p-6 block group hover:border-[rgba(196,146,108,0.3)] transition-all"
-        >
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="text-xl font-semibold mb-2" style={{ color: "#3D2B1F" }}>
-                Menu Manager
-              </h3>
-              <p style={{ color: "#6B5740" }}>
-                Add new products, update pricing, adjust sort order, and archive items.
-              </p>
-            </div>
-            <span
-              className="text-xl mt-1 opacity-40 group-hover:opacity-70 group-hover:translate-x-1 transition-all"
-              style={{ color: "#8B5E3C" }}
-            >
-              &rarr;
-            </span>
-          </div>
-        </Link>
-      </section>
     </div>
   );
 }

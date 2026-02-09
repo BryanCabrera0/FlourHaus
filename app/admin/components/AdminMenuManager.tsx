@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { formatCurrency } from "@/app/lib/format";
 
 type AdminMenuItem = {
@@ -84,10 +84,190 @@ function groupByCategory(items: AdminMenuItem[]): { category: string; items: Adm
   return Array.from(map.entries()).map(([category, items]) => ({ category, items }));
 }
 
+/* ── ImageUploadField ──────────────────────── */
+
+function ImageUploadField({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (url: string) => void;
+}) {
+  const [tab, setTab] = useState<"upload" | "url">("upload");
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = useCallback(
+    async (file: File) => {
+      setUploadError(null);
+
+      const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+      if (!allowed.includes(file.type)) {
+        setUploadError("Use JPEG, PNG, WebP, or GIF.");
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setUploadError("Max 5 MB.");
+        return;
+      }
+
+      setUploading(true);
+      try {
+        const body = new FormData();
+        body.append("file", file);
+        const res = await fetch("/api/admin/upload", { method: "POST", body });
+        const json = (await res.json().catch(() => null)) as { url?: string; error?: string } | null;
+        if (!res.ok || !json?.url) {
+          throw new Error(json?.error ?? "Upload failed.");
+        }
+        onChange(json.url);
+      } catch (err) {
+        setUploadError(err instanceof Error ? err.message : "Upload failed.");
+      } finally {
+        setUploading(false);
+      }
+    },
+    [onChange],
+  );
+
+  function onDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  }
+
+  function onDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    setDragging(true);
+  }
+
+  function onDragLeave(e: React.DragEvent) {
+    e.preventDefault();
+    setDragging(false);
+  }
+
+  return (
+    <div>
+      <label className="admin-label">Image</label>
+
+      {/* tab switcher */}
+      <div className="flex gap-2 mb-2">
+        <button
+          type="button"
+          className={`upload-tab ${tab === "upload" ? "active" : ""}`}
+          onClick={() => setTab("upload")}
+        >
+          Upload
+        </button>
+        <button
+          type="button"
+          className={`upload-tab ${tab === "url" ? "active" : ""}`}
+          onClick={() => setTab("url")}
+        >
+          Paste URL
+        </button>
+      </div>
+
+      {tab === "upload" ? (
+        <div
+          className={`upload-dropzone p-4 text-center ${dragging ? "dragging" : ""}`}
+          onDrop={onDrop}
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleFile(file);
+              e.target.value = "";
+            }}
+          />
+          {uploading ? (
+            <div className="py-2">
+              <div className="upload-progress-bar w-full mx-auto" style={{ maxWidth: 200 }} />
+              <p className="text-xs mt-2" style={{ color: "#8B7EB0" }}>
+                Uploading...
+              </p>
+            </div>
+          ) : (
+            <div className="py-2">
+              <svg
+                className="mx-auto mb-1"
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#A0A0B8"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              <p className="text-xs" style={{ color: "#8B7EB0" }}>
+                Drop an image or click to browse
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: "#ADA0C8" }}>
+                JPEG, PNG, WebP, GIF &middot; Max 5 MB
+              </p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="admin-input"
+          placeholder="https://... (optional)"
+        />
+      )}
+
+      {uploadError && (
+        <p className="text-xs mt-1" style={{ color: "#C06070" }}>
+          {uploadError}
+        </p>
+      )}
+
+      {/* preview */}
+      {value && (
+        <div className="mt-2 flex items-start gap-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={value}
+            alt="Preview"
+            className="h-16 rounded-lg object-cover"
+            style={{ border: "1px solid rgba(91, 164, 212, 0.15)" }}
+          />
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="btn-remove text-xs py-1 px-2"
+            title="Remove image"
+          >
+            &times;
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Main component ────────────────────────── */
+
 export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps) {
   const [items, setItems] = useState<AdminMenuItem[]>(sortItems(initialItems));
   const [drafts, setDrafts] = useState<Record<number, MenuDraft>>(() =>
-    Object.fromEntries(initialItems.map((item) => [item.id, toDraft(item)]))
+    Object.fromEntries(initialItems.map((item) => [item.id, toDraft(item)])),
   );
   const [createForm, setCreateForm] = useState<MenuDraft>({
     name: "",
@@ -133,7 +313,7 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
     const price = parsePrice(createForm.price);
     const sortOrder = parseSortOrder(createForm.sortOrder);
     if (!createForm.name.trim() || !createForm.description.trim() || !createForm.category.trim() || price === null || sortOrder === null) {
-      setError("Name, description, category, valid price, and valid sort order are required.");
+      setError("Name, description, category, valid price, and valid display order are required.");
       return;
     }
 
@@ -194,7 +374,7 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
     const price = parsePrice(draft.price);
     const sortOrder = parseSortOrder(draft.sortOrder);
     if (!draft.name.trim() || !draft.description.trim() || !draft.category.trim() || price === null || sortOrder === null) {
-      setError("Name, description, category, valid price, and valid sort order are required.");
+      setError("Name, description, category, valid price, and valid display order are required.");
       return;
     }
 
@@ -223,7 +403,7 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
       }
 
       setItems((prev) =>
-        sortItems(prev.map((item) => (item.id === id ? payload.menuItem! : item)))
+        sortItems(prev.map((item) => (item.id === id ? payload.menuItem! : item))),
       );
       setDrafts((prev) => ({ ...prev, [id]: toDraft(payload.menuItem!) }));
       setMessage(`Saved "${payload.menuItem.name}".`);
@@ -256,13 +436,13 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
         throw new Error(payload?.error ?? "Failed to update menu item.");
       }
       setItems((prev) =>
-        sortItems(prev.map((item) => (item.id === id ? payload.menuItem! : item)))
+        sortItems(prev.map((item) => (item.id === id ? payload.menuItem! : item))),
       );
       setDrafts((prev) => ({ ...prev, [id]: toDraft(payload.menuItem!) }));
       setMessage(
         payload.menuItem.isActive
           ? `Activated "${payload.menuItem.name}".`
-          : `Archived "${payload.menuItem.name}".`
+          : `Archived "${payload.menuItem.name}".`,
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update menu item.");
@@ -308,22 +488,33 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
     }
   }
 
+  /* running index for stagger delay */
+  let cardIndex = 0;
+
   return (
-    <div className="space-y-6">
-      {/* Collapsible Add Menu Item */}
-      <div className="panel overflow-hidden">
+    <div className="space-y-6 relative z-10">
+      {/* ── Collapsible Add Menu Item (CSS accordion) ── */}
+      <div className="panel menu-add-panel panel-hover-glow animate-card-enter overflow-hidden">
         <button
           type="button"
           onClick={() => setShowCreateForm((prev) => !prev)}
           className="w-full p-5 flex items-center justify-between text-left"
         >
-          <h2 className="text-xl font-bold" style={{ color: "#3D2B1F" }}>
-            Add Menu Item
-          </h2>
+          <div className="flex items-center gap-3">
+            <span
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-lg font-bold"
+              style={{ background: "linear-gradient(135deg, #BAA0E6, #8CC8E8)" }}
+            >
+              +
+            </span>
+            <h2 className="text-xl font-bold" style={{ color: "#332B52" }}>
+              Add Menu Item
+            </h2>
+          </div>
           <span
-            className="text-lg transition-transform"
+            className="text-lg transition-transform duration-300"
             style={{
-              color: "#8B5E3C",
+              color: "#BAA0E6",
               transform: showCreateForm ? "rotate(180deg)" : "rotate(0deg)",
             }}
           >
@@ -331,116 +522,118 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
           </span>
         </button>
 
-        {showCreateForm && (
-          <div className="px-5 pb-5 border-t border-[#ECDCCF] pt-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="admin-label">Name</label>
-                <input
-                  value={createForm.name}
-                  onChange={(event) => setCreateForm((prev) => ({ ...prev, name: event.target.value }))}
-                  className="admin-input"
-                  placeholder="e.g. Sourdough Loaf"
-                />
+        <div className={`accordion-content ${showCreateForm ? "open" : ""}`}>
+          <div className="accordion-inner">
+            <div className="px-5 pb-5 pt-5" style={{ borderTop: "1px solid rgba(186, 156, 230, 0.15)" }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="admin-label">Name</label>
+                  <input
+                    value={createForm.name}
+                    onChange={(event) => setCreateForm((prev) => ({ ...prev, name: event.target.value }))}
+                    className="admin-input"
+                    placeholder="e.g. Sourdough Loaf"
+                  />
+                </div>
+                <div>
+                  <label className="admin-label">Category</label>
+                  <input
+                    value={createForm.category}
+                    onChange={(event) => setCreateForm((prev) => ({ ...prev, category: event.target.value }))}
+                    className="admin-input"
+                    placeholder="e.g. Breads"
+                  />
+                </div>
+                <div>
+                  <label className="admin-label">Price</label>
+                  <input
+                    value={createForm.price}
+                    onChange={(event) => setCreateForm((prev) => ({ ...prev, price: event.target.value }))}
+                    className="admin-input"
+                    placeholder="4.99"
+                  />
+                </div>
+                <div>
+                  <label className="admin-label">Display Order</label>
+                  <input
+                    value={createForm.sortOrder}
+                    onChange={(event) => setCreateForm((prev) => ({ ...prev, sortOrder: event.target.value }))}
+                    className="admin-input"
+                    placeholder="1 = first, 10 = later"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <ImageUploadField
+                    value={createForm.imageUrl}
+                    onChange={(url) => setCreateForm((prev) => ({ ...prev, imageUrl: url }))}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="admin-label">Description</label>
+                  <textarea
+                    value={createForm.description}
+                    onChange={(event) => setCreateForm((prev) => ({ ...prev, description: event.target.value }))}
+                    className="admin-input"
+                    style={{ resize: "vertical" }}
+                    rows={3}
+                    placeholder="Describe this item..."
+                  />
+                </div>
               </div>
-              <div>
-                <label className="admin-label">Category</label>
-                <input
-                  value={createForm.category}
-                  onChange={(event) => setCreateForm((prev) => ({ ...prev, category: event.target.value }))}
-                  className="admin-input"
-                  placeholder="e.g. Breads"
-                />
+              <div className="mt-4 flex items-center justify-between gap-4 flex-wrap">
+                <label className="text-sm flex items-center gap-2" style={{ color: "#5E5580" }}>
+                  <input
+                    type="checkbox"
+                    checked={createForm.isActive}
+                    onChange={(event) =>
+                      setCreateForm((prev) => ({ ...prev, isActive: event.target.checked }))
+                    }
+                  />
+                  Item is active
+                </label>
+                <button
+                  type="button"
+                  onClick={handleCreate}
+                  disabled={isCreating}
+                  className="btn-pastel-primary py-2.5 px-5 text-sm disabled:opacity-50"
+                >
+                  {isCreating ? "Creating..." : "Create Item"}
+                </button>
               </div>
-              <div>
-                <label className="admin-label">Price</label>
-                <input
-                  value={createForm.price}
-                  onChange={(event) => setCreateForm((prev) => ({ ...prev, price: event.target.value }))}
-                  className="admin-input"
-                  placeholder="4.99"
-                />
-              </div>
-              <div>
-                <label className="admin-label">Sort Order</label>
-                <input
-                  value={createForm.sortOrder}
-                  onChange={(event) => setCreateForm((prev) => ({ ...prev, sortOrder: event.target.value }))}
-                  className="admin-input"
-                  placeholder="10"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="admin-label">Image URL</label>
-                <input
-                  value={createForm.imageUrl}
-                  onChange={(event) => setCreateForm((prev) => ({ ...prev, imageUrl: event.target.value }))}
-                  className="admin-input"
-                  placeholder="https://... (optional)"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className="admin-label">Description</label>
-                <textarea
-                  value={createForm.description}
-                  onChange={(event) => setCreateForm((prev) => ({ ...prev, description: event.target.value }))}
-                  className="admin-input"
-                  style={{ resize: "vertical" }}
-                  rows={3}
-                  placeholder="Describe this item..."
-                />
-              </div>
-            </div>
-            <div className="mt-4 flex items-center justify-between gap-4 flex-wrap">
-              <label className="text-sm flex items-center gap-2" style={{ color: "#6B5740" }}>
-                <input
-                  type="checkbox"
-                  checked={createForm.isActive}
-                  onChange={(event) =>
-                    setCreateForm((prev) => ({ ...prev, isActive: event.target.checked }))
-                  }
-                />
-                Item is active
-              </label>
-              <button
-                type="button"
-                onClick={handleCreate}
-                disabled={isCreating}
-                className="btn-primary py-2.5 px-5 text-sm disabled:opacity-50"
-              >
-                {isCreating ? "Creating..." : "Create Item"}
-              </button>
             </div>
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Feedback messages */}
+      {/* ── Feedback messages ── */}
       {error ? (
-        <p className="text-sm p-3 rounded-lg" style={{ color: "#A0555E", backgroundColor: "rgba(160, 85, 94, 0.08)" }}>
+        <div className="feedback-error text-sm p-3 rounded-lg animate-card-enter">
           {error}
-        </p>
+        </div>
       ) : null}
       {message ? (
-        <p className="text-sm p-3 rounded-lg" style={{ color: "#4A6B4A", backgroundColor: "rgba(74, 107, 74, 0.08)" }}>
+        <div className="feedback-success text-sm p-3 rounded-lg animate-card-enter">
           {message}
-        </p>
+        </div>
       ) : null}
 
-      {/* Menu items grouped by category */}
+      {/* ── Menu items grouped by category ── */}
       {!hasItems ? (
-        <div className="panel p-6">
-          <p style={{ color: "#6B5740" }}>No menu items yet.</p>
+        <div className="panel panel-hover-glow p-6 animate-card-enter">
+          <p style={{ color: "#5E5580" }}>No menu items yet.</p>
         </div>
       ) : (
         grouped.map((group) => (
           <div key={group.category} className="space-y-4">
-            <div className="flex items-center gap-3 px-1">
-              <h3 className="text-sm font-semibold uppercase tracking-wider" style={{ color: "#8B5E3C" }}>
+            {/* Category header */}
+            <div className="category-bar flex items-center gap-3">
+              <h3 className="category-underline text-sm font-semibold uppercase tracking-wider" style={{ color: "#6B5B95" }}>
                 {group.category}
               </h3>
-              <div className="flex-1 h-px" style={{ background: "rgba(196, 146, 108, 0.2)" }} />
-              <span className="text-xs" style={{ color: "#8B5E3C" }}>
+              <div className="flex-1" />
+              <span
+                className="accent-lavender text-xs font-semibold px-2.5 py-0.5 rounded-full"
+              >
                 {group.items.length} item{group.items.length === 1 ? "" : "s"}
               </span>
             </div>
@@ -448,28 +641,32 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
             {group.items.map((item) => {
               const draft = drafts[item.id] ?? toDraft(item);
               const busy = !!busyIds[item.id];
+              const delay = cardIndex * 0.07;
+              cardIndex++;
               return (
                 <div
                   key={item.id}
-                  className={`panel p-0 overflow-hidden ${!item.isActive ? "item-archived" : ""}`}
+                  className={`panel menu-item-card panel-hover-glow animate-card-enter p-0 overflow-hidden ${!item.isActive ? "item-archived" : ""}`}
+                  style={{ animationDelay: `${delay}s` }}
                 >
                   {/* Item header */}
-                  <div className="p-5 flex justify-between items-start gap-4 flex-wrap">
-                    <div className="flex gap-4 items-start">
-                      {/* Image thumbnail */}
-                      {item.imageUrl ? (
-                        <img
-                          src={item.imageUrl}
-                          alt={item.name}
-                          className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
-                          style={{ border: "1px solid rgba(61,43,31,0.08)" }}
-                        />
-                      ) : (
+	                  <div className="p-5 flex justify-between items-start gap-4 flex-wrap">
+	                    <div className="flex gap-4 items-start">
+	                      {/* Image thumbnail */}
+	                      {item.imageUrl ? (
+	                        // eslint-disable-next-line @next/next/no-img-element
+	                        <img
+	                          src={item.imageUrl}
+	                          alt={item.name}
+	                          className="w-14 h-14 rounded-lg object-cover flex-shrink-0"
+	                          style={{ border: "2px solid rgba(186,156,230,0.15)" }}
+	                        />
+	                      ) : (
                         <div
                           className="w-14 h-14 rounded-lg flex-shrink-0 flex items-center justify-center"
-                          style={{ background: "rgba(196,146,108,0.08)", border: "1px solid rgba(61,43,31,0.06)" }}
+                          style={{ background: "rgba(186,156,230,0.08)", border: "2px solid rgba(186,156,230,0.12)" }}
                         >
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B09A88" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#BAA0E6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                             <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                             <circle cx="8.5" cy="8.5" r="1.5" />
                             <path d="m21 15-5-5L5 21" />
@@ -478,34 +675,28 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                       )}
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-semibold" style={{ color: "#3D2B1F" }}>
+                          <p className="font-semibold" style={{ color: "#332B52" }}>
                             {item.name}
                           </p>
-                          <span className="text-xs" style={{ color: "#8B5E3C" }}>
+                          <span className="text-xs font-medium accent-sky px-1.5 py-0.5 rounded" style={{ fontSize: "0.65rem" }}>
                             #{item.id}
                           </span>
                           {item.isActive ? (
-                            <span
-                              className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full"
-                              style={{ background: "rgba(5,150,105,0.1)", color: "#065F46" }}
-                            >
-                              <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#059669" }} />
+                            <span className="status-active inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                              <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#4CAF7D" }} />
                               Active
                             </span>
                           ) : (
-                            <span
-                              className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full"
-                              style={{ background: "rgba(107,114,128,0.1)", color: "#374151" }}
-                            >
-                              <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#6B7280" }} />
+                            <span className="status-archived inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                              <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#BAA0E6" }} />
                               Archived
                             </span>
                           )}
                         </div>
-                        <p className="text-sm" style={{ color: "#6B5740" }}>
-                          {formatCurrency(item.price)} &middot; sort {item.sortOrder}
+                        <p className="text-sm mt-0.5" style={{ color: "#5E5580" }}>
+                          {formatCurrency(item.price)} &middot; display order {item.sortOrder}
                         </p>
-                        <p className="text-xs mt-0.5" style={{ color: "#B09A88" }}>
+                        <p className="text-xs mt-0.5" style={{ color: "#ADA0C8" }}>
                           Updated {new Date(item.updatedAt).toLocaleString()}
                         </p>
                       </div>
@@ -531,7 +722,7 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                   </div>
 
                   {/* Edit fields */}
-                  <div className="border-t border-[#ECDCCF] px-5 py-5">
+                  <div className="menu-edit-section px-5 py-5">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="admin-label">Name</label>
@@ -558,7 +749,7 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                         />
                       </div>
                       <div>
-                        <label className="admin-label">Sort Order</label>
+                        <label className="admin-label">Display Order</label>
                         <input
                           value={draft.sortOrder}
                           onChange={(event) => setDraftValue(item.id, "sortOrder", event.target.value)}
@@ -566,21 +757,10 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                         />
                       </div>
                       <div className="md:col-span-2">
-                        <label className="admin-label">Image URL</label>
-                        <input
+                        <ImageUploadField
                           value={draft.imageUrl}
-                          onChange={(event) => setDraftValue(item.id, "imageUrl", event.target.value)}
-                          className="admin-input"
-                          placeholder="https://... (optional)"
+                          onChange={(url) => setDraftValue(item.id, "imageUrl", url)}
                         />
-                        {draft.imageUrl && (
-                          <img
-                            src={draft.imageUrl}
-                            alt="Preview"
-                            className="mt-2 h-20 rounded-lg object-cover"
-                            style={{ border: "1px solid rgba(61,43,31,0.08)" }}
-                          />
-                        )}
                       </div>
                       <div className="md:col-span-2">
                         <label className="admin-label">Description</label>
@@ -597,7 +777,7 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                     </div>
 
                     <div className="mt-4 flex justify-between items-center gap-4 flex-wrap">
-                      <label className="text-sm flex items-center gap-2" style={{ color: "#6B5740" }}>
+                      <label className="text-sm flex items-center gap-2" style={{ color: "#5E5580" }}>
                         <input
                           type="checkbox"
                           checked={draft.isActive}
@@ -609,7 +789,7 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                         type="button"
                         onClick={() => handleSave(item.id)}
                         disabled={busy}
-                        className="btn-primary py-2.5 px-5 text-sm disabled:opacity-50"
+                        className="btn-pastel-primary py-2.5 px-5 text-sm disabled:opacity-50"
                       >
                         {busy ? "Saving..." : "Save Changes"}
                       </button>
