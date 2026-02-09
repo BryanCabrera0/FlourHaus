@@ -18,12 +18,12 @@ export default async function AdminLoginPage({ searchParams }: AdminLoginPagePro
 
   if (!configured) {
     return (
-      <div className="min-h-screen bg-warm-gradient flex items-center justify-center px-6">
+      <div className="min-h-screen bg-surface flex items-center justify-center px-6">
         <div className="panel p-8 max-w-lg">
-          <h1 className="text-3xl font-bold mb-3" style={{ color: "#3D2B1F" }}>
+          <h1 className="text-3xl font-bold mb-3" style={{ color: "#332B52" }}>
             Admin Auth Not Configured
           </h1>
-          <p style={{ color: "#6B5740" }}>
+          <p style={{ color: "#5E5580" }}>
             Set <code>ADMIN_EMAIL</code>, <code>ADMIN_PASSWORD_HASH</code>, and{" "}
             <code>ADMIN_SESSION_SECRET</code> in your environment variables.
           </p>
@@ -33,12 +33,12 @@ export default async function AdminLoginPage({ searchParams }: AdminLoginPagePro
   }
 
   return (
-    <div className="min-h-screen bg-warm-gradient flex items-center justify-center px-6">
+    <div className="min-h-screen bg-surface flex items-center justify-center px-6">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div
             className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-4"
-            style={{ background: "linear-gradient(135deg, #C4926C 0%, #B07D58 100%)" }}
+            style={{ background: "#A78BDB" }}
           >
             <svg
               width="28"
@@ -56,11 +56,11 @@ export default async function AdminLoginPage({ searchParams }: AdminLoginPagePro
           </div>
           <h1
             className="text-2xl font-bold"
-            style={{ color: "#3D2B1F", fontFamily: "Poppins, sans-serif" }}
+            style={{ color: "#332B52", fontFamily: "Poppins, sans-serif" }}
           >
             Flour Haus
           </h1>
-          <p className="text-sm mt-1" style={{ color: "#8B5E3C" }}>
+          <p className="text-sm mt-1" style={{ color: "#8B7EB0" }}>
             Admin Portal
           </p>
         </div>

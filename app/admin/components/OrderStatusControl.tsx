@@ -72,7 +72,7 @@ export default function OrderStatusControl({
         </button>
       </div>
       {error ? (
-        <p className="text-xs" style={{ color: "#A0555E" }}>
+        <p className="text-xs" style={{ color: "#C06070" }}>
           {error}
         </p>
       ) : null}

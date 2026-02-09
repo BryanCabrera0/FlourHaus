@@ -26,16 +26,16 @@ export default async function MenuPage() {
   }, {});
 
   return (
-    <div className="min-h-screen bg-warm-gradient">
+    <div className="min-h-screen bg-surface">
       <div className="max-w-6xl mx-auto px-6 py-16">
         <div className="text-center mb-14">
-          <p className="uppercase tracking-[0.2em] text-sm font-medium mb-3" style={{ color: "#8B5E3C" }}>Browse &amp; Order</p>
-          <h1 className="text-4xl md:text-5xl font-bold" style={{ color: "#3D2B1F" }}>Our Menu</h1>
-          <p className="mt-4 max-w-md mx-auto leading-relaxed" style={{ color: "#6B5740" }}>Everything is made fresh to order. Pick your favorites and we&apos;ll handle the rest.</p>
+          <p className="uppercase tracking-[0.2em] text-sm font-medium mb-3" style={{ color: "#5BA4D4" }}>Browse &amp; Order</p>
+          <h1 className="text-4xl md:text-5xl font-bold" style={{ color: "#332B52" }}>Our Menu</h1>
+          <p className="mt-4 max-w-md mx-auto leading-relaxed" style={{ color: "#5E5580" }}>Everything is made fresh to order. Pick your favorites and we&apos;ll handle the rest.</p>
         </div>
         {Object.entries(categories).map(([category, items]) => (
           <section key={category} className="mb-16">
-            <h2 className="text-2xl font-semibold mb-7 pb-3" style={{ color: "#3D2B1F", borderBottom: "2px solid rgba(196, 146, 108, 0.2)" }}>{category}</h2>
+            <h2 className="text-2xl font-semibold mb-7 pb-3" style={{ color: "#332B52", borderBottom: "2px solid rgba(91, 164, 212, 0.3)" }}>{category}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
               {items.map((item) => (
                 <MenuItemCard key={item.id} item={item} />

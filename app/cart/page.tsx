@@ -16,10 +16,10 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-warm-gradient max-w-6xl mx-auto px-6 py-20 text-center">
+      <div className="min-h-screen bg-surface max-w-6xl mx-auto px-6 py-20 text-center">
         <div className="panel p-14 max-w-md mx-auto">
-          <h1 className="text-3xl font-bold mb-3" style={{ color: "#3D2B1F" }}>Your Cart</h1>
-          <p className="mb-8" style={{ color: "#6B5740" }}>Your cart is empty.</p>
+          <h1 className="text-3xl font-bold mb-3" style={{ color: "#332B52" }}>Your Cart</h1>
+          <p className="mb-8" style={{ color: "#5E5580" }}>Your cart is empty.</p>
           <a href="/menu" className="btn-primary py-3 px-8 text-sm inline-block">
             Browse Menu
           </a>
@@ -61,22 +61,22 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-warm-gradient">
+    <div className="min-h-screen bg-surface">
       <div className="max-w-6xl mx-auto px-6 py-14">
-        <h1 className="text-4xl font-bold mb-10" style={{ color: "#3D2B1F" }}>Your Cart</h1>
+        <h1 className="text-4xl font-bold mb-10" style={{ color: "#332B52" }}>Your Cart</h1>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
             {items.map((item) => (
               <div key={item.id} className="card p-5 flex justify-between items-center">
                 <div>
-                  <h3 className="font-semibold" style={{ color: "#3D2B1F" }}>{item.name}</h3>
-                  <p className="text-sm mt-1" style={{ color: "#6B5740" }}>
+                  <h3 className="font-semibold" style={{ color: "#332B52" }}>{item.name}</h3>
+                  <p className="text-sm mt-1" style={{ color: "#5E5580" }}>
                     Qty: {item.quantity} &times; {formatCurrency(item.price)}
                   </p>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="font-bold" style={{ color: "#8B5E3C" }}>
+                  <span className="font-bold" style={{ color: "#4DAE8A" }}>
                     {formatCurrency(item.price * item.quantity)}
                   </span>
                   <button onClick={() => removeFromCart(item.id)} className="btn-remove text-sm">
@@ -88,20 +88,20 @@ export default function CartPage() {
           </div>
 
           {/* Order Summary */}
-          <div className="panel p-7 h-fit">
-            <h2 className="text-lg font-semibold mb-5" style={{ color: "#3D2B1F" }}>Order Summary</h2>
-            <div className="flex justify-between mb-2" style={{ color: "#6B5740" }}>
+          <div className="panel cart-summary-panel p-7 h-fit">
+            <h2 className="text-lg font-semibold mb-5" style={{ color: "#332B52" }}>Order Summary</h2>
+            <div className="flex justify-between mb-2" style={{ color: "#5E5580" }}>
               <span>Subtotal</span>
               <span>{formatCurrency(total)}</span>
             </div>
-            <div className="my-5" style={{ borderTop: "1px solid rgba(61, 43, 31, 0.08)" }}></div>
-            <div className="flex justify-between font-bold text-lg mb-7" style={{ color: "#3D2B1F" }}>
+            <div className="my-5" style={{ borderTop: "1px solid rgba(77, 174, 138, 0.2)" }}></div>
+            <div className="flex justify-between font-bold text-lg mb-7" style={{ color: "#332B52" }}>
               <span>Total</span>
               <span>{formatCurrency(total)}</span>
             </div>
 
-            <p className="text-sm font-medium mb-3" style={{ color: "#6B5740" }}>Fulfillment Method</p>
-            <div className="flex gap-3 mb-7 p-1.5 rounded-xl" style={{ backgroundColor: "rgba(61, 43, 31, 0.04)" }}>
+            <p className="text-sm font-medium mb-3" style={{ color: "#5E5580" }}>Fulfillment Method</p>
+            <div className="flex gap-3 mb-7 p-1.5 rounded-xl" style={{ backgroundColor: "rgba(77, 174, 138, 0.06)" }}>
               <button
                 onClick={() => setFulfillment("pickup")}
                 className={`flex-1 py-2.5 font-semibold text-sm transition-all ${fulfillment === "pickup" ? "toggle-active" : "toggle-inactive"}`}
@@ -116,7 +116,7 @@ export default function CartPage() {
               </button>
             </div>
 
-            <label className="text-sm font-medium block mb-2" style={{ color: "#6B5740" }}>
+            <label className="text-sm font-medium block mb-2" style={{ color: "#5E5580" }}>
               Order Notes (optional)
             </label>
             <textarea
@@ -124,12 +124,12 @@ export default function CartPage() {
               onChange={(event) => setOrderNotes(event.target.value)}
               maxLength={500}
               placeholder="Add allergy details, pickup timing, or delivery notes."
-              className="w-full mb-6 rounded-xl border border-[#E4D5C8] bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#D9B08C]"
+              className="w-full mb-6 rounded-xl border border-[#D8D0EC] bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#A78BDB]"
               rows={3}
             />
 
             {checkoutError ? (
-              <p className="text-sm mb-4 p-3 rounded-lg" style={{ color: "#A0555E", backgroundColor: "rgba(160, 85, 94, 0.06)" }}>{checkoutError}</p>
+              <p className="text-sm mb-4 p-3 rounded-lg" style={{ color: "#C06070", backgroundColor: "rgba(192, 96, 112, 0.06)" }}>{checkoutError}</p>
             ) : null}
 
             <button

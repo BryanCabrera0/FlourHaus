@@ -503,7 +503,7 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
           <div className="flex items-center gap-3">
             <span
               className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-lg font-bold"
-              style={{ background: "linear-gradient(135deg, #BAA0E6, #8CC8E8)" }}
+              style={{ background: "#BAA0E6" }}
             >
               +
             </span>
