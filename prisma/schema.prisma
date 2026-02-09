@@ -10,20 +10,53 @@ datasource db {
   provider = "postgresql"
 }
 
-model MenuItem{
-  id          Int     @id @default(autoincrement())
+enum FulfillmentMethod {
+  pickup
+  delivery
+}
+
+enum OrderStatus {
+  new
+  paid
+  baking
+  ready
+  completed
+  canceled
+}
+
+model MenuItem {
+  id          Int      @id @default(autoincrement())
   name        String
   description String
   price       Float
   category    String
+  imageUrl    String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
 }
 
 model Order {
-  id              Int      @id @default(autoincrement())
+  id              Int               @id @default(autoincrement())
   items           String
   total           Float
-  fulfillment     String
-  stripeSessionId String
-  status          String   @default("new")
+  fulfillment     FulfillmentMethod @default(pickup)
+  stripeSessionId String            @unique
+  status          OrderStatus       @default(new)
+  customerName    String?
+  customerPhone   String?
+  notes           String?
   createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+}
+
+model AdminAuditLog {
+  id         Int      @id @default(autoincrement())
+  action     String
+  entityType String
+  entityId   Int?
+  details    String
+  actorEmail String
+  createdAt  DateTime @default(now())
 }

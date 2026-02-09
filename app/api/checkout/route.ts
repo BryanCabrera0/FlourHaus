@@ -7,6 +7,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 type CheckoutRequestBody = {
   items: CartItem[];
   fulfillment: FulfillmentMethod;
+  notes?: string;
 };
 
 function isFulfillmentMethod(value: unknown): value is FulfillmentMethod {
@@ -37,7 +38,7 @@ function parseCheckoutRequest(value: unknown): CheckoutRequestBody | null {
     return null;
   }
 
-  const body = value as { items?: unknown; fulfillment?: unknown };
+  const body = value as { items?: unknown; fulfillment?: unknown; notes?: unknown };
   if (!Array.isArray(body.items) || !isFulfillmentMethod(body.fulfillment)) {
     return null;
   }
@@ -47,9 +48,15 @@ function parseCheckoutRequest(value: unknown): CheckoutRequestBody | null {
     return null;
   }
 
+  const notes =
+    typeof body.notes === "string" && body.notes.trim()
+      ? body.notes.trim().slice(0, 500)
+      : undefined;
+
   return {
     items,
     fulfillment: body.fulfillment,
+    notes,
   };
 }
 
@@ -75,7 +82,9 @@ export async function POST(request: Request) {
       metadata: {
         fulfillment: payload.fulfillment,
         items: JSON.stringify(payload.items),
+        ...(payload.notes ? { notes: payload.notes } : {}),
       },
+      phone_number_collection: { enabled: true },
       mode: "payment",
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/success`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/cart`,

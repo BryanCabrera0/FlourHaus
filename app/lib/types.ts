@@ -3,6 +3,7 @@ export type MenuItemCardData = {
   name: string;
   description: string;
   price: number;
+  imageUrl?: string | null;
 };
 
 export type CartItem = {
@@ -16,4 +17,15 @@ export type CartItemInput = Pick<CartItem, "id" | "name" | "price">;
 
 export type OrderItem = CartItem;
 
-export type FulfillmentMethod = "pickup" | "delivery";
+export const FULFILLMENT_METHODS = ["pickup", "delivery"] as const;
+export type FulfillmentMethod = (typeof FULFILLMENT_METHODS)[number];
+
+export const ORDER_STATUSES = [
+  "new",
+  "paid",
+  "baking",
+  "ready",
+  "completed",
+  "canceled",
+] as const;
+export type OrderStatus = (typeof ORDER_STATUSES)[number];

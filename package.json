@@ -3,10 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "prisma:generate": "prisma generate",
+    "predev": "npm run prisma:generate",
+    "prebuild": "npm run prisma:generate",
+    "postinstall": "npm run prisma:generate",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "admin:hash": "node scripts/hash-admin-password.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.3.0",

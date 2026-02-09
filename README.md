@@ -1,5 +1,35 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Owner Admin Setup
+
+1. Copy `.env.example` to `.env` and set your real values.
+2. Generate a secure admin password hash:
+
+```bash
+npm run admin:hash -- "your-password"
+```
+
+3. Set these admin env vars:
+   - `ADMIN_EMAIL`
+   - `ADMIN_PASSWORD_HASH`
+   - `ADMIN_SESSION_SECRET`
+4. Apply Prisma migrations:
+
+```bash
+npx prisma migrate deploy
+```
+
+5. Start app and sign in at `/admin/login`.
+
+### Admin Features Included
+
+- Protected admin auth/session (`/admin/login`, signed HttpOnly cookie, middleware protection)
+- Dashboard (`/admin`)
+- Orders management (`/admin/orders`) with status updates
+- Menu management (`/admin/menu`) with create/update/archive/delete/sort
+- Admin audit logs (`AdminAuditLog` table and `/api/admin/audit`)
+- Stripe webhook idempotency by unique `stripeSessionId`
+
 ## Getting Started
 
 First, run the development server:

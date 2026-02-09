@@ -1,12 +1,24 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import prisma from "../../lib/prisma";
+import { FULFILLMENT_METHODS } from "../../lib/types";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
+function parseFulfillment(value: string | undefined): "pickup" | "delivery" {
+  if (value && FULFILLMENT_METHODS.includes(value as "pickup" | "delivery")) {
+    return value as "pickup" | "delivery";
+  }
+  return "pickup";
+}
+
 export async function POST(request: Request) {
   const body = await request.text();
-  const signature = request.headers.get("stripe-signature")!;
+  const signature = request.headers.get("stripe-signature");
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!signature || !webhookSecret) {
+    return NextResponse.json({ error: "Missing webhook signature configuration" }, { status: 400 });
+  }
 
   let event: Stripe.Event;
 
@@ -14,7 +26,7 @@ export async function POST(request: Request) {
     event = stripe.webhooks.constructEvent(
       body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET!
+      webhookSecret
     );
   } catch {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
@@ -22,14 +34,44 @@ export async function POST(request: Request) {
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
+    const fulfillment = parseFulfillment(session.metadata?.fulfillment);
 
-    await prisma.order.create({
-      data: {
-        items: session.metadata?.items ?? "[]",
-        total: (session.amount_total ?? 0) / 100,
-        fulfillment: session.metadata?.fulfillment ?? "pickup",
-        stripeSessionId: session.id,
-      },
+    await prisma.$transaction(async (tx) => {
+      const existing = await tx.order.findUnique({
+        where: { stripeSessionId: session.id },
+      });
+
+      if (!existing) {
+        await tx.order.create({
+          data: {
+            items: session.metadata?.items ?? "[]",
+            total: (session.amount_total ?? 0) / 100,
+            fulfillment,
+            stripeSessionId: session.id,
+            status: "paid",
+            customerName: session.customer_details?.name ?? null,
+            customerPhone: session.customer_details?.phone ?? null,
+            notes: session.metadata?.notes ?? null,
+          },
+        });
+        return;
+      }
+
+      await tx.order.update({
+        where: { id: existing.id },
+        data: {
+          items: session.metadata?.items ?? existing.items,
+          total: (session.amount_total ?? 0) / 100,
+          fulfillment,
+          customerName: session.customer_details?.name ?? existing.customerName,
+          customerPhone: session.customer_details?.phone ?? existing.customerPhone,
+          notes: session.metadata?.notes ?? existing.notes,
+          status:
+            existing.status === "new" || existing.status === "paid"
+              ? "paid"
+              : existing.status,
+        },
+      });
     });
   }
 

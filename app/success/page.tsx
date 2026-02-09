@@ -2,12 +2,15 @@ import Link from "next/link";
 
 export default function SuccessPage() {
   return (
-    <div className="min-h-screen p-8 max-w-5xl mx-auto">
-      <h1 className="text-4xl font-bold text-[#4A3F4B]">Thank you for your order!</h1>
-      <p className="text-[#6B5B6E] mt-2">Your delicious treats will be with you soon.</p>
-      <Link href="/" className="mt-6 inline-block bg-[#C8A2C8] hover:bg-[#B8A0B8] text-white font-bold py-3 px-8 rounded-full transition-colors">
-        Back to Home
-      </Link>
+    <div className="min-h-screen bg-warm-gradient max-w-6xl mx-auto px-6 py-24 text-center">
+      <div className="panel glow-warm max-w-md mx-auto p-14">
+        <p className="uppercase tracking-[0.2em] text-sm font-medium mb-4" style={{ color: "#8B5E3C" }}>Order Confirmed</p>
+        <h1 className="text-4xl font-bold mb-4" style={{ color: "#3D2B1F" }}>Thank You!</h1>
+        <p className="text-lg mb-10 leading-relaxed" style={{ color: "#6B5740" }}>Your order has been placed. We&apos;ll start baking your treats right away.</p>
+        <Link href="/" className="btn-primary py-3.5 px-10 text-sm inline-block">
+          Back to Home
+        </Link>
+      </div>
     </div>
   );
 }
