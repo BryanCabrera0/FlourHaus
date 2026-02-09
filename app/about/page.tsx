@@ -7,7 +7,7 @@ export default function AboutPage() {
       <section className="hero-gradient wave-divider py-24">
         <div className="max-w-6xl mx-auto px-6 text-center">
           <p className="uppercase tracking-[0.2em] text-sm font-medium mb-4 text-glow" style={{ color: "#E0B88A" }}>Our Story</p>
-          <h1 className="text-4xl md:text-6xl font-bold text-glow" style={{ color: "#FFFFFF" }}>About Christine&apos;s Bakery</h1>
+          <h1 className="text-4xl md:text-6xl font-bold text-glow" style={{ color: "#FFFFFF" }}>About Flour Haus</h1>
         </div>
       </section>
 
@@ -16,7 +16,7 @@ export default function AboutPage() {
           <div className="panel p-10 md:p-14">
             <div className="space-y-6 leading-relaxed text-lg" style={{ color: "#5C4033" }}>
               <p>
-                Christine&apos;s Bakery is a home-based bakery serving the Miami community. We pride ourselves on using the freshest ingredients and traditional recipes to create delicious baked goods that bring joy to our customers.
+                Flour Haus is a home-based bakery serving the Miami community. We pride ourselves on using the freshest ingredients and traditional recipes to create delicious baked goods that bring joy to our customers.
               </p>
               <p>
                 Whether you&apos;re looking for a birthday cake, fresh pastries for brunch, or a box of cookies to share with friends, everything is made from scratch with care and attention to detail.

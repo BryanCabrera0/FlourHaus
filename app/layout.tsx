@@ -4,8 +4,8 @@ import Link from "next/link";
 import { CartProvider } from "./components/CartProvider";
 
 export const metadata: Metadata = {
-  title: "Christine's Bakery",
-  description: "Fresh baked goods in Miami",
+  title: "Flour Haus",
+  description: "Fresh baked goods in Miami from Flour Haus",
 };
 
 export default function RootLayout({
@@ -19,7 +19,7 @@ export default function RootLayout({
         <nav className="nav-glass sticky top-0 z-50">
           <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
             <Link href="/" className="font-bold text-xl tracking-wide" style={{ fontFamily: "Poppins, sans-serif", color: "#8B5E3C" }}>
-              Christine&apos;s Bakery
+              Flour Haus
             </Link>
             <div className="flex gap-8">
               <Link href="/menu" className="font-medium text-sm uppercase tracking-wider transition-colors" style={{ color: "#5C4033" }}>Menu</Link>
@@ -35,7 +35,7 @@ export default function RootLayout({
           <div className="max-w-6xl mx-auto px-6 py-14">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
               <div>
-                <h3 className="font-semibold text-lg mb-3" style={{ fontFamily: "Poppins, sans-serif", color: "#F0E0D0" }}>Christine&apos;s Bakery</h3>
+                <h3 className="font-semibold text-lg mb-3" style={{ fontFamily: "Poppins, sans-serif", color: "#F0E0D0" }}>Flour Haus</h3>
                 <p className="text-sm leading-relaxed opacity-80">Homemade baked goods made with love in Miami. From classic cakes to fresh pastries, every bite is crafted with the finest ingredients.</p>
               </div>
               <div>
@@ -52,7 +52,7 @@ export default function RootLayout({
               </div>
             </div>
             <div className="mt-10 pt-6 text-center text-sm opacity-60" style={{ borderTop: "1px solid rgba(212, 184, 156, 0.2)" }}>
-              <p>&copy; {new Date().getFullYear()} Christine&apos;s Bakery. All rights reserved.</p>
+              <p>&copy; {new Date().getFullYear()} Flour Haus. All rights reserved.</p>
             </div>
           </div>
         </footer>

@@ -54,7 +54,7 @@ export default function AdminLoginForm({ nextPath }: AdminLoginFormProps) {
   return (
     <form onSubmit={handleSubmit} className="panel p-8 max-w-md mx-auto">
       <h1 className="text-3xl font-bold mb-2" style={{ color: "#3D2B1F" }}>
-        Owner Login
+        Flour Haus Admin
       </h1>
       <p className="text-sm mb-6" style={{ color: "#6B5740" }}>
         Sign in to manage orders and menu items.

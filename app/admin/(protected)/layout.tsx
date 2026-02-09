@@ -19,7 +19,7 @@ export default async function ProtectedAdminLayout({
         <header className="panel p-5 mb-8 flex flex-col gap-4 md:flex-row md:justify-between md:items-center">
           <div>
             <p className="text-xs uppercase tracking-[0.2em]" style={{ color: "#8B5E3C" }}>
-              Owner Admin
+              Flour Haus Admin
             </p>
             <p className="text-sm mt-1" style={{ color: "#6B5740" }}>
               Signed in as {session.email}

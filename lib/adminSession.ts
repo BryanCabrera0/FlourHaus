@@ -1,4 +1,4 @@
-export const ADMIN_SESSION_COOKIE_NAME = "christine_admin_session";
+export const ADMIN_SESSION_COOKIE_NAME = "flour_haus_admin_session";
 export const ADMIN_SESSION_MAX_AGE_SECONDS = 60 * 60 * 12;
 
 const encoder = new TextEncoder();

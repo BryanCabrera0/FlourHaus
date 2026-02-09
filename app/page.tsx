@@ -23,7 +23,7 @@ export default async function HomePage() {
       {/* Hero Section */}
       <section className="hero-gradient wave-divider py-28 md:py-36">
         <div className="max-w-6xl mx-auto px-6 text-center">
-          <p className="uppercase tracking-[0.2em] text-sm font-medium mb-5 text-glow" style={{ color: "#E0B88A" }}>Miami&apos;s Home Bakery</p>
+          <p className="uppercase tracking-[0.2em] text-sm font-medium mb-5 text-glow" style={{ color: "#E0B88A" }}>Flour Haus • Miami</p>
           <h1 className="text-5xl md:text-7xl font-bold mb-6 text-glow" style={{ color: "#FFFFFF" }}>Baked Fresh,<br />Made With Love</h1>
           <p className="text-lg max-w-xl mx-auto mb-10 leading-relaxed" style={{ color: "#F0E0D0" }}>
             From classic cakes to seasonal treats, everything is handcrafted with the finest ingredients and delivered to your door.
