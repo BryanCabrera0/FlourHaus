@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/adminApi";
-import { enforceMenuItemVariantRules } from "@/lib/menuItemVariantRules";
+import { enforceMenuItemVariantRules, isCookieCategory } from "@/lib/menuItemVariantRules";
 
 export const runtime = "nodejs";
 
@@ -174,6 +174,10 @@ function parseUpdateBody(body: UpdateMenuItemBody | null) {
   };
 }
 
+function roundCurrency(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
 export async function PATCH(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
@@ -196,26 +200,78 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid menu item update payload." }, { status: 400 });
   }
 
+  const existing = await prisma.menuItem.findUnique({ where: { id } });
+  if (!existing) {
+    return NextResponse.json({ error: "Menu item not found." }, { status: 404 });
+  }
+
+  const nextCategory =
+    typeof updateData.updateData.category === "string"
+      ? (updateData.updateData.category as string)
+      : existing.category;
+  const nextIsCookie = isCookieCategory(nextCategory);
+  const wasCookie = isCookieCategory(existing.category);
+
+  const nextUpdateData = { ...updateData.updateData } as Record<string, unknown>;
+  const nextCookiePackPrices = updateData.cookiePackPrices;
+
+  if (!nextIsCookie && nextCookiePackPrices !== undefined) {
+    return NextResponse.json(
+      { error: "Cookie pack prices can only be set for cookie items." },
+      { status: 400 },
+    );
+  }
+
+  if (nextIsCookie) {
+    if (nextCookiePackPrices === undefined) {
+      // If an item is being switched into the Cookies category, require variant pricing.
+      if (!wasCookie) {
+        return NextResponse.json(
+          { error: "Cookie items require pack prices for 4/8/12." },
+          { status: 400 },
+        );
+      }
+
+      // Never allow updating the cookie base price directly; it's derived from pack pricing.
+      if ("price" in nextUpdateData) {
+        delete nextUpdateData.price;
+      }
+    } else {
+      const requiredPresets = [4, 8, 12] as const;
+      for (const preset of requiredPresets) {
+        if (nextCookiePackPrices[preset] === undefined) {
+          return NextResponse.json(
+            { error: "Cookie items require pack prices for 4/8/12." },
+            { status: 400 },
+          );
+        }
+      }
+
+      const price4 = nextCookiePackPrices[4] as number;
+      nextUpdateData.price = roundCurrency(price4 / 4);
+    }
+  }
+
   try {
     const updated = await prisma.$transaction(async (tx) => {
-      const existing = await tx.menuItem.findUnique({ where: { id } });
-      if (!existing) {
+      const existingTx = await tx.menuItem.findUnique({ where: { id } });
+      if (!existingTx) {
         return null;
       }
 
-      const hasMenuItemUpdates = Object.keys(updateData.updateData).length > 0;
+      const hasMenuItemUpdates = Object.keys(nextUpdateData).length > 0;
       const menuItem = hasMenuItemUpdates
         ? await tx.menuItem.update({
             where: { id },
-            data: updateData.updateData,
+            data: nextUpdateData,
           })
-        : existing;
+        : existingTx;
 
       await enforceMenuItemVariantRules(tx, {
         menuItemId: id,
         category: menuItem.category,
         basePrice: menuItem.price,
-        cookiePackPrices: updateData.cookiePackPrices,
+        cookiePackPrices: nextCookiePackPrices,
       });
 
       await tx.adminAuditLog.create({
@@ -225,17 +281,17 @@ export async function PATCH(
           entityId: id,
           details: JSON.stringify({
             before: {
-              name: existing.name,
-              description: existing.description,
-              price: existing.price,
-              category: existing.category,
-              imageUrl: existing.imageUrl,
-              isActive: existing.isActive,
-              sortOrder: existing.sortOrder,
+              name: existingTx.name,
+              description: existingTx.description,
+              price: existingTx.price,
+              category: existingTx.category,
+              imageUrl: existingTx.imageUrl,
+              isActive: existingTx.isActive,
+              sortOrder: existingTx.sortOrder,
             },
             after: {
-              ...updateData.updateData,
-              ...(updateData.cookiePackPrices ? { cookiePackPrices: updateData.cookiePackPrices } : {}),
+              ...nextUpdateData,
+              ...(nextCookiePackPrices ? { cookiePackPrices: nextCookiePackPrices } : {}),
             },
           }),
           actorEmail: auth.session.email,

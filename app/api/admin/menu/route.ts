@@ -49,7 +49,6 @@ function parseCreateBody(body: CreateMenuItemBody | null) {
   const name = typeof body?.name === "string" ? body.name.trim() : "";
   const description = typeof body?.description === "string" ? body.description.trim() : "";
   const category = typeof body?.category === "string" ? body.category.trim() : "";
-  const price = typeof body?.price === "number" ? body.price : Number(body?.price);
   const sortOrderRaw =
     typeof body?.sortOrder === "number" ? body.sortOrder : Number(body?.sortOrder);
   const sortOrder = Number.isInteger(sortOrderRaw) ? sortOrderRaw : 0;
@@ -59,16 +58,19 @@ function parseCreateBody(body: CreateMenuItemBody | null) {
       : Number(body?.featuredSortOrder);
   const featuredSortOrder = Number.isInteger(featuredSortOrderRaw) ? featuredSortOrderRaw : 0;
 
-  if (!name || !description || !category || !Number.isFinite(price) || price < 0) {
+  if (!name || !description || !category) {
     return null;
   }
 
+  const cookieItem = isCookieCategory(category);
+
   const cookiePackPrices = (() => {
-    if (!isCookieCategory(category)) {
+    if (!cookieItem) {
       return undefined;
     }
+
     if (body?.cookiePackPrices === undefined) {
-      return undefined;
+      return null;
     }
     if (typeof body.cookiePackPrices !== "object" || body.cookiePackPrices === null || Array.isArray(body.cookiePackPrices)) {
       return null;
@@ -76,12 +78,10 @@ function parseCreateBody(body: CreateMenuItemBody | null) {
 
     const input = body.cookiePackPrices as Record<string, unknown>;
     const presets = [4, 8, 12] as const;
-    const output: Partial<Record<(typeof presets)[number], number>> = {};
+    const output = {} as Record<(typeof presets)[number], number>;
 
     for (const preset of presets) {
-      if (!(String(preset) in input)) {
-        continue;
-      }
+      if (!(String(preset) in input)) return null;
       const raw = input[String(preset)];
       const parsed = typeof raw === "number" ? raw : Number(raw);
       if (!Number.isFinite(parsed) || parsed < 0) {
@@ -90,10 +90,20 @@ function parseCreateBody(body: CreateMenuItemBody | null) {
       output[preset] = parsed;
     }
 
-    return Object.keys(output).length > 0 ? output : null;
+    return output;
   })();
 
   if (cookiePackPrices === null) {
+    return null;
+  }
+
+  const price = cookieItem
+    ? Math.round((((cookiePackPrices as Record<4 | 8 | 12, number>)[4]) / 4) * 100) / 100
+    : typeof body?.price === "number"
+      ? body.price
+      : Number(body?.price);
+
+  if (!Number.isFinite(price) || price < 0) {
     return null;
   }
 
@@ -142,7 +152,7 @@ export async function POST(request: NextRequest) {
   );
   if (!parsedBody) {
     return NextResponse.json(
-      { error: "Invalid menu item payload. Name, description, category, and a non-negative price are required." },
+      { error: "Invalid menu item payload. Name/description/category are required. For cookies, pack prices (4/8/12) are required." },
       { status: 400 }
     );
   }

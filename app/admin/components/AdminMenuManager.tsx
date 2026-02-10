@@ -102,6 +102,29 @@ function formatCount(count: number, noun: string) {
   return `${count} ${noun}${count === 1 ? "" : "s"}`;
 }
 
+function isCookieCategory(category: string): boolean {
+  const normalized = category.trim().toLowerCase();
+  return normalized === "cookies" || normalized === "cookie";
+}
+
+function getAdminPriceLabel(item: Pick<AdminMenuItem, "category" | "price" | "variants">): string {
+  if (!isCookieCategory(item.category)) {
+    return formatCurrency(item.price);
+  }
+
+  const prices = (item.variants ?? [])
+    .map((variant) => variant.price)
+    .filter((price) => typeof price === "number" && Number.isFinite(price) && price >= 0);
+
+  const price4 = (item.variants ?? []).find((variant) => variant.unitCount === 4)?.price;
+  if (typeof price4 === "number" && Number.isFinite(price4) && price4 >= 0) {
+    return `4-pack ${formatCurrency(price4)}`;
+  }
+
+  const min = prices.length > 0 ? Math.min(...prices) : null;
+  return min !== null ? `Packs from ${formatCurrency(min)}` : "Pack pricing";
+}
+
 async function requestMenuUpdate(id: number, body: Record<string, unknown>) {
   const response = await fetch(`/api/admin/menu/${id}`, {
     method: "PATCH",
@@ -529,27 +552,35 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
     setError(null);
     setMessage(null);
 
-    const price = parsePrice(editorDraft.price);
     const sortOrder = parseSortOrder(editorDraft.sortOrder);
     const featuredSortOrder = editorDraft.isFeatured ? parseSortOrder(editorDraft.featuredSortOrder) : 0;
-    const cookiePackPrice4 = isCookieDraft ? parsePrice(editorDraft.cookiePackPrice4) : null;
-    const cookiePackPrice8 = isCookieDraft ? parsePrice(editorDraft.cookiePackPrice8) : null;
-    const cookiePackPrice12 = isCookieDraft ? parsePrice(editorDraft.cookiePackPrice12) : null;
 
     if (
       !editorDraft.name.trim() ||
       !editorDraft.description.trim() ||
       !editorDraft.category.trim() ||
-      price === null ||
       sortOrder === null ||
       featuredSortOrder === null
     ) {
-      setError("Name, description, category, valid price, and valid order values are required.");
+      setError("Name, description, category, and valid order values are required.");
       return;
     }
 
+    const cookiePackPrice4 = isCookieDraft ? parsePrice(editorDraft.cookiePackPrice4) : null;
+    const cookiePackPrice8 = isCookieDraft ? parsePrice(editorDraft.cookiePackPrice8) : null;
+    const cookiePackPrice12 = isCookieDraft ? parsePrice(editorDraft.cookiePackPrice12) : null;
+
     if (isCookieDraft && (cookiePackPrice4 === null || cookiePackPrice8 === null || cookiePackPrice12 === null)) {
       setError("Cookie pack prices (4, 8, 12) are required for cookie items.");
+      return;
+    }
+
+    const basePrice = isCookieDraft
+      ? Math.round(((cookiePackPrice4 as number) / 4) * 100) / 100
+      : parsePrice(editorDraft.price);
+
+    if (basePrice === null) {
+      setError("A valid price is required.");
       return;
     }
 
@@ -557,7 +588,7 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
       name: editorDraft.name.trim(),
       description: editorDraft.description.trim(),
       category: editorDraft.category.trim(),
-      price,
+      price: basePrice,
       ...(isCookieDraft
         ? {
             cookiePackPrices: {
@@ -828,7 +859,7 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                       </div>
 
                       <p className="text-sm text-fh-muted mt-1 truncate">
-                        {item.category} • {formatCurrency(item.price)}
+                        {item.category} • {getAdminPriceLabel(item)}
                       </p>
                       <p className="text-xs text-fh-muted mt-1 truncate">
                         {item.description}
@@ -934,20 +965,26 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                   />
                 </div>
                 <div>
-                  <label className="admin-label">Price</label>
-                  <input
-                    value={editorDraft.price}
-                    onChange={(e) => setEditorDraft((prev) => ({ ...prev, price: e.target.value }))}
-                    className="admin-input"
-                    disabled={editorBusy}
-                    inputMode="decimal"
-                    placeholder="4.99"
-                  />
-                  {isCookieDraft ? (
-                    <p className="text-xs mt-1 text-fh-muted">
-                      Cookie items are sold only in packs of 4 / 8 / 12. Set pack pricing below.
-                    </p>
-                  ) : null}
+                  {!isCookieDraft ? (
+                    <>
+                      <label className="admin-label">Price</label>
+                      <input
+                        value={editorDraft.price}
+                        onChange={(e) => setEditorDraft((prev) => ({ ...prev, price: e.target.value }))}
+                        className="admin-input"
+                        disabled={editorBusy}
+                        inputMode="decimal"
+                        placeholder="4.99"
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <label className="admin-label">Cookie Pricing</label>
+                      <p className="text-xs text-fh-muted leading-relaxed">
+                        Cookie items are sold only in packs of 4 / 8 / 12. Set pack prices below. (No single price.)
+                      </p>
+                    </>
+                  )}
                 </div>
                 {isCookieDraft ? (
                   <div className="md:col-span-2">
