@@ -3,17 +3,22 @@ import { getAdminSessionFromCookieStore, isAdminAuthConfigured } from "@/lib/adm
 import AdminLoginForm from "../components/AdminLoginForm";
 
 type AdminLoginPageProps = {
-  searchParams: { next?: string };
+  searchParams: Promise<{ next?: string }>;
 };
 
 export default async function AdminLoginPage({ searchParams }: AdminLoginPageProps) {
+  const resolvedSearchParams = await searchParams;
+
   const session = await getAdminSessionFromCookieStore();
   if (session) {
     redirect("/admin");
   }
 
   const configured = isAdminAuthConfigured();
-  const nextPath = typeof searchParams.next === "string" ? searchParams.next : "/admin";
+  const nextPath =
+    typeof resolvedSearchParams.next === "string"
+      ? resolvedSearchParams.next
+      : "/admin";
 
   if (!configured) {
     return (

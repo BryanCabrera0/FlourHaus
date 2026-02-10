@@ -10,7 +10,7 @@ import CustomOrderRequestActions from "../../components/CustomOrderRequestAction
 export const dynamic = "force-dynamic";
 
 type CustomOrdersPageProps = {
-  searchParams: { status?: string };
+  searchParams: Promise<{ status?: string }>;
 };
 
 const STATUS_BADGE: Record<string, string> = {
@@ -49,7 +49,8 @@ function formatDate(value: Date | null) {
 }
 
 export default async function AdminCustomOrdersPage({ searchParams }: CustomOrdersPageProps) {
-  const statusFilter = asStatus(searchParams.status);
+  const resolvedSearchParams = await searchParams;
+  const statusFilter = asStatus(resolvedSearchParams.status);
 
   const requests = await prisma.customOrderRequest.findMany({
     where: {

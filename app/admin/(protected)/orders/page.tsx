@@ -14,7 +14,7 @@ import OrderStatusControl from "../../components/OrderStatusControl";
 export const dynamic = "force-dynamic";
 
 type OrdersPageProps = {
-  searchParams: { status?: string; fulfillment?: string };
+  searchParams: Promise<{ status?: string; fulfillment?: string }>;
 };
 
 const STATUS_BADGE: Record<string, string> = {
@@ -68,8 +68,9 @@ function getFilterHref({
 }
 
 export default async function AdminOrdersPage({ searchParams }: OrdersPageProps) {
-  const statusFilter = asOrderStatus(searchParams.status);
-  const fulfillmentFilter = asFulfillment(searchParams.fulfillment);
+  const resolvedSearchParams = await searchParams;
+  const statusFilter = asOrderStatus(resolvedSearchParams.status);
+  const fulfillmentFilter = asFulfillment(resolvedSearchParams.fulfillment);
 
   const orders = await prisma.order.findMany({
     where: {
