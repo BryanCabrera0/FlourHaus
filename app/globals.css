@@ -323,7 +323,11 @@
 
 /* ── Primary button ───────────────────────── */
 .btn-primary {
-  background: rgba(224, 215, 255, 0.95);
+  background: linear-gradient(
+    135deg,
+    var(--fh-accent-lavender) 0%,
+    var(--fh-accent-rose) 100%
+  );
   color: var(--fh-heading);
   border-radius: 14px;
   border: 1px solid rgba(45, 40, 80, 0.14);
@@ -334,7 +338,11 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .btn-primary:hover {
-  background: rgba(255, 204, 225, 0.88);
+  background: linear-gradient(
+    135deg,
+    var(--fh-accent-rose) 0%,
+    var(--fh-accent-lavender) 100%
+  );
   box-shadow:
     0 6px 16px rgba(107, 91, 149, 0.22),
     0 14px 34px rgba(255, 204, 225, 0.26);
@@ -343,7 +351,11 @@
 
 /* ── Dark button ──────────────────────────── */
 .btn-dark {
-  background: rgba(204, 241, 255, 0.92);
+  background: linear-gradient(
+    135deg,
+    var(--fh-yellow) 0%,
+    var(--fh-blue) 100%
+  );
   color: var(--fh-heading);
   border-radius: 14px;
   border: 1px solid rgba(45, 40, 80, 0.16);
@@ -354,7 +366,11 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .btn-dark:hover {
-  background: rgba(250, 255, 199, 0.92);
+  background: linear-gradient(
+    135deg,
+    var(--fh-blue) 0%,
+    var(--fh-yellow) 100%
+  );
   box-shadow:
     0 5px 14px rgba(70, 58, 85, 0.26),
     0 10px 26px rgba(70, 58, 85, 0.22);
@@ -920,7 +936,12 @@
 
 /* ── Pastel button variant ────────────────── */
 .btn-pastel-primary {
-  background: rgba(204, 241, 255, 0.88);
+  background: linear-gradient(
+    135deg,
+    rgba(204, 241, 255, 0.95) 0%,
+    rgba(224, 215, 255, 0.95) 55%,
+    rgba(255, 204, 225, 0.82) 100%
+  );
   color: var(--fh-heading);
   border: 1px solid rgba(45, 40, 80, 0.14);
   border-radius: 12px;
@@ -931,7 +952,12 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .btn-pastel-primary:hover {
-  background: rgba(224, 215, 255, 0.88);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 204, 225, 0.9) 0%,
+    rgba(224, 215, 255, 0.95) 55%,
+    rgba(204, 241, 255, 0.95) 100%
+  );
   box-shadow:
     0 8px 22px rgba(70, 58, 85, 0.12),
     0 18px 40px rgba(255, 204, 225, 0.22);
