@@ -4,7 +4,7 @@ import Link from "next/link";
 import { CartProvider } from "./components/CartProvider";
 import CartLink from "./components/CartLink";
 import FluidShaderBackground from "./components/FluidShaderBackground";
-import { Inter, Nunito, Poppins } from "next/font/google";
+import { Abril_Fatface, Nunito } from "next/font/google";
 
 const nunito = Nunito({
   subsets: ["latin"],
@@ -13,18 +13,11 @@ const nunito = Nunito({
   variable: "--font-nunito",
 });
 
-const inter = Inter({
+const abril = Abril_Fatface({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: "400",
   display: "swap",
-  variable: "--font-inter",
-});
-
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-  variable: "--font-poppins",
+  variable: "--font-abril",
 });
 
 export const metadata: Metadata = {
@@ -38,7 +31,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${nunito.variable} ${inter.variable} ${poppins.variable}`}>
+    <html lang="en" className={`${nunito.variable} ${abril.variable}`}>
       <body className="antialiased min-h-screen">
         <FluidShaderBackground />
         <div className="relative z-10 min-h-screen flex flex-col">

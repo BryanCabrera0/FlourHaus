@@ -39,13 +39,13 @@
   body {
     background-color: var(--fh-bg);
     color: var(--fh-text);
-    font-family: var(--font-nunito), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+    font-family: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
     min-height: 100vh;
     line-height: 1.5;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+    font-family: var(--font-abril), ui-serif, Georgia, serif;
   }
 }
 
@@ -944,7 +944,7 @@
 
 /* ── Brand text utility ──────────────────── */
 .brand-text {
-  font-family: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-abril), ui-serif, Georgia, serif;
   color: var(--fh-accent-primary);
 }
 
