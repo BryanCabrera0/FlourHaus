@@ -50,18 +50,12 @@ export default async function HomePage() {
     <div className="bg-surface">
       <section className="hero-surface wave-divider py-24 md:py-32">
         <div className="max-w-6xl mx-auto px-6 text-center">
-          <p className="kicker kicker-accent mb-4">
-            Flour Haus • Cozy Bakes
-          </p>
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 text-fh-heading">
-            A Homey Pastel Bakery
-            <br />
-            Made For Sweet Moments
+          <h1 className="text-6xl md:text-8xl font-normal mb-4 text-fh-heading">
+            Flour Haus
           </h1>
-          <p className="text-lg max-w-2xl mx-auto mb-10 leading-relaxed text-fh-muted">
-            From cookie boxes to celebration cakes, every order is made with warm flavors,
-            soft colors, and thoughtful details.
-          </p>
+          <h2 className="text-2xl md:text-3xl font-normal mb-10 text-fh-muted">
+            The sweet life.
+          </h2>
           <div className="flex flex-wrap justify-center gap-4">
             <Link href="/menu" className="btn-primary py-3.5 px-9 text-sm">
               Order Now
