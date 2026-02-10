@@ -7,7 +7,7 @@ import CustomOrderPayClient from "./pay-client";
 export const dynamic = "force-dynamic";
 
 type CustomOrderPayPageProps = {
-  params: { token: string };
+  params: Promise<{ token: string }>;
 };
 
 function parseFulfillment(value: unknown): FulfillmentMethod {
@@ -15,7 +15,8 @@ function parseFulfillment(value: unknown): FulfillmentMethod {
 }
 
 export default async function CustomOrderPayPage({ params }: CustomOrderPayPageProps) {
-  const token = typeof params.token === "string" ? params.token.trim() : "";
+  const resolvedParams = await params;
+  const token = typeof resolvedParams.token === "string" ? resolvedParams.token.trim() : "";
 
   if (!token) {
     return (
@@ -162,4 +163,3 @@ export default async function CustomOrderPayPage({ params }: CustomOrderPayPageP
     </div>
   );
 }
-

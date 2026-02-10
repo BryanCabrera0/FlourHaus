@@ -93,13 +93,13 @@ const FRAG = /* glsl */ `
     float c = smoothstep(0.35, 0.92, n1);
 
     vec3 col = mix(cIce, cLav, a);
-    col = mix(col, cPink, b * 0.75);
+    col = mix(col, cPink, b * 0.82);
     col = mix(col, cBlue, (1.0 - a) * 0.4);
-    col = mix(col, cButter, c * 0.35);
+    col = mix(col, cButter, c * 0.4);
 
     // Subtle vignette to keep center readable.
     float vign = smoothstep(1.15, 0.25, length(p));
-    col = mix(col, vec3(1.0), (1.0 - vign) * 0.10);
+    col = mix(col, vec3(1.0), (1.0 - vign) * 0.08);
 
     // Porcelain glaze highlight: adds a gentle moving sheen without high-frequency noise.
     float glaze = smoothstep(0.58, 0.95, n) * 0.06;
@@ -107,7 +107,7 @@ const FRAG = /* glsl */ `
     col = mix(col, vec3(1.0), glaze);
 
     // Keep it soft/pastel: slight desaturation towards white.
-    col = mix(col, vec3(1.0), 0.18);
+    col = mix(col, vec3(1.0), 0.14);
 
     gl_FragColor = vec4(col, 1.0);
   }

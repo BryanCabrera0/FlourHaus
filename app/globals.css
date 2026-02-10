@@ -302,6 +302,13 @@
     0 12px 28px rgba(70, 58, 85, 0.07);
 }
 
+.panel-cream {
+  box-shadow:
+    0 2px 10px rgba(70, 58, 85, 0.06),
+    0 12px 28px rgba(70, 58, 85, 0.07),
+    0 24px 60px rgba(250, 255, 199, 0.22);
+}
+
 /* ── Soft surface (no hover lift) ─────────── */
 .surface-soft {
   background: rgba(255, 255, 255, 0.8);
@@ -396,24 +403,24 @@
 .bg-surface,
 .bg-warm-gradient {
   /* Keep pages readable while letting the fluid shader show through. */
-  background: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.16);
 }
 
 .bg-cream {
   /* Fade into the surrounding surface tint so the section doesn't look like a hard band. */
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.22) 0%,
-    rgba(250, 255, 199, 0.34) 18%,
-    rgba(250, 255, 199, 0.34) 82%,
-    rgba(255, 255, 255, 0.22) 100%
+    rgba(255, 255, 255, 0.16) 0%,
+    rgba(250, 255, 199, 0.32) 14%,
+    rgba(250, 255, 199, 0.32) 86%,
+    rgba(255, 255, 255, 0.16) 100%
   );
 }
 
 /* ── Hero background ──────────────────────── */
 .hero-surface,
 .hero-gradient {
-  background: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.16);
 }
 
 /* ── Section wave divider ─────────────────── */
@@ -427,7 +434,7 @@
   left: 0;
   right: 0;
   height: 60px;
-  background: rgba(255, 255, 255, 0.22);
+  background: inherit;
   clip-path: ellipse(55% 100% at 50% 100%);
 }
 

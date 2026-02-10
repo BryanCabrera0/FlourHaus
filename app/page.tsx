@@ -102,9 +102,9 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="bg-cream">
-        <div className="max-w-6xl mx-auto px-6 py-20">
-          <div className="panel p-10 md:p-12 text-center">
+      <section className="py-20 md:py-24">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="panel panel-cream p-10 md:p-12 text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-fh-heading">
               Ready To Place An Order?
             </h2>
@@ -119,7 +119,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section id="custom-order" className="bg-surface">
+      <section id="custom-order">
         <div className="max-w-6xl mx-auto px-6 py-20">
           <div className="panel p-10 md:p-12">
             <div className="text-center mb-10">
