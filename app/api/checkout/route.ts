@@ -6,6 +6,14 @@ import {
   DELIVERY_ORIGIN_ADDRESS,
   getDeliveryEligibility,
 } from "@/lib/delivery";
+import {
+  getDefaultScheduleConfig,
+  isSlotAvailable,
+  isValidDateString,
+  isValidTimeSlot,
+  normalizeScheduleConfig,
+  type FulfillmentScheduleConfig,
+} from "@/lib/fulfillmentSchedule";
 import prisma from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -19,6 +27,8 @@ type CheckoutItem = {
 type CheckoutRequestBody = {
   items: CheckoutItem[];
   fulfillment: FulfillmentMethod;
+  scheduledDate: string;
+  scheduledTimeSlot: string;
   notes?: string;
   deliveryAddress?: string;
 };
@@ -58,6 +68,8 @@ function parseCheckoutRequest(value: unknown): CheckoutRequestBody | null {
   const body = value as {
     items?: unknown;
     fulfillment?: unknown;
+    scheduledDate?: unknown;
+    scheduledTimeSlot?: unknown;
     notes?: unknown;
     deliveryAddress?: unknown;
   };
@@ -81,6 +93,17 @@ function parseCheckoutRequest(value: unknown): CheckoutRequestBody | null {
       ? body.notes.trim().slice(0, 500)
       : undefined;
 
+  const scheduledDate =
+    typeof body.scheduledDate === "string" ? body.scheduledDate.trim() : "";
+  const scheduledTimeSlot =
+    typeof body.scheduledTimeSlot === "string"
+      ? body.scheduledTimeSlot.trim()
+      : "";
+
+  if (!isValidDateString(scheduledDate) || !isValidTimeSlot(scheduledTimeSlot)) {
+    return null;
+  }
+
   const deliveryAddress =
     typeof body.deliveryAddress === "string" && body.deliveryAddress.trim()
       ? body.deliveryAddress.trim().slice(0, 240)
@@ -89,6 +112,8 @@ function parseCheckoutRequest(value: unknown): CheckoutRequestBody | null {
   return {
     items: normalizedItems,
     fulfillment: body.fulfillment,
+    scheduledDate,
+    scheduledTimeSlot,
     notes,
     deliveryAddress,
   };
@@ -118,6 +143,37 @@ export async function POST(request: Request) {
   const baseUrl = getBaseUrl(request);
 
   try {
+    const scheduleSettings = await prisma.storeSettings.upsert({
+      where: { id: 1 },
+      create: {
+        id: 1,
+        fulfillmentSchedule: getDefaultScheduleConfig(),
+      },
+      update: {},
+      select: {
+        stripeAccountId: true,
+        fulfillmentSchedule: true,
+      },
+    });
+
+    const schedule = normalizeScheduleConfig(
+      scheduleSettings.fulfillmentSchedule,
+    ) satisfies FulfillmentScheduleConfig;
+
+    if (
+      !isSlotAvailable(
+        schedule,
+        payload.fulfillment,
+        payload.scheduledDate,
+        payload.scheduledTimeSlot,
+      )
+    ) {
+      return NextResponse.json(
+        { error: "That date/time slot is not available. Please choose another." },
+        { status: 400 },
+      );
+    }
+
     const deliveryAddress =
       payload.fulfillment === "delivery"
         ? (payload.deliveryAddress ?? "").trim()
@@ -247,16 +303,10 @@ export async function POST(request: Request) {
 
     const normalizedStripeItems = normalizedItems.filter((item): item is NonNullable<typeof item> => item !== null);
 
-    const settings = await prisma.storeSettings.upsert({
-      where: { id: 1 },
-      create: { id: 1 },
-      update: {},
-      select: { stripeAccountId: true },
-    });
-
     const connectedAccountId =
-      typeof settings.stripeAccountId === "string" && settings.stripeAccountId.trim()
-        ? settings.stripeAccountId.trim()
+      typeof scheduleSettings.stripeAccountId === "string" &&
+      scheduleSettings.stripeAccountId.trim()
+        ? scheduleSettings.stripeAccountId.trim()
         : null;
 
     const session = await stripe.checkout.sessions.create({
@@ -285,6 +335,8 @@ export async function POST(request: Request) {
       metadata: {
         fulfillment: payload.fulfillment,
         items: JSON.stringify(normalizedStripeItems),
+        scheduledDate: payload.scheduledDate,
+        scheduledTimeSlot: payload.scheduledTimeSlot,
         ...(deliveryAddress ? { deliveryAddress } : {}),
         ...(payload.notes ? { notes: payload.notes } : {}),
       },

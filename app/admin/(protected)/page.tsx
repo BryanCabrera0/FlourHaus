@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { formatCurrency } from "@/lib/format";
 import { parseOrderItems } from "@/lib/orderItems";
 import AdminStripePanel from "../components/AdminStripePanel";
+import { formatDateLabel, formatTimeSlotLabel } from "@/lib/fulfillmentSchedule";
 
 export const dynamic = "force-dynamic";
 
@@ -89,6 +90,10 @@ export default async function AdminDashboardPage() {
             {recentOrders.map((order) => {
               const items = parseOrderItems(order.items);
               const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+              const scheduleLabel =
+                order.scheduledDate && order.scheduledTimeSlot
+                  ? `${formatDateLabel(order.scheduledDate)} \u00b7 ${formatTimeSlotLabel(order.scheduledTimeSlot)}`
+                  : null;
 
               return (
                 <div
@@ -109,6 +114,11 @@ export default async function AdminDashboardPage() {
                       {order.createdAt.toLocaleString()} &middot; {itemCount} item
                       {itemCount === 1 ? "" : "s"}
                     </p>
+                    {scheduleLabel ? (
+                      <p className="text-sm text-fh-muted">
+                        Scheduled: {scheduleLabel}
+                      </p>
+                    ) : null}
                   </div>
                   <div className="font-bold self-start md:self-center text-lg text-fh-accent-blue">
                     {formatCurrency(order.total)}

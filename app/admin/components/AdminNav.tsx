@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { href: "/admin/orders", label: "Orders", exact: false },
   { href: "/admin/custom-orders", label: "Custom Orders", exact: false },
   { href: "/admin/menu", label: "Menu", exact: false },
+  { href: "/admin/scheduling", label: "Scheduling", exact: false },
 ] as const;
 
 export default function AdminNav() {

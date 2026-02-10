@@ -66,6 +66,9 @@ model Order {
   items           String
   total           Float
   fulfillment     FulfillmentMethod @default(pickup)
+  scheduledDate   String?
+  scheduledTimeSlot String?
+  deliveryAddress String?
   stripeSessionId String            @unique
   status          OrderStatus       @default(new)
   customerName    String?
@@ -118,6 +121,7 @@ model AdminAuditLog {
 model StoreSettings {
   id              Int      @id @default(1)
   stripeAccountId String?  @unique
+  fulfillmentSchedule Json?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @default(now()) @updatedAt
 }

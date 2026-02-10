@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import prisma from "@/lib/prisma";
 import { FULFILLMENT_METHODS } from "@/lib/types";
 import { getStripeClient } from "@/lib/stripe";
+import { isValidDateString, isValidTimeSlot } from "@/lib/fulfillmentSchedule";
 
 export const runtime = "nodejs";
 
@@ -22,27 +23,6 @@ function parseOptionalText(value: unknown, maxLength: number): string | null {
     return null;
   }
   return trimmed.length > maxLength ? trimmed.slice(0, maxLength) : trimmed;
-}
-
-function buildOrderNotes({
-  fulfillment,
-  deliveryAddress,
-  notes,
-}: {
-  fulfillment: "pickup" | "delivery";
-  deliveryAddress: string | null;
-  notes: string | null;
-}): string | null {
-  if (fulfillment !== "delivery" || !deliveryAddress) {
-    return notes;
-  }
-
-  const parts = [`Delivery address: ${deliveryAddress}`];
-  if (notes) {
-    parts.push(`Notes: ${notes}`);
-  }
-
-  return parts.join("\n");
 }
 
 export async function POST(request: Request) {
@@ -82,11 +62,14 @@ export async function POST(request: Request) {
     const fulfillment = parseFulfillment(session.metadata?.fulfillment);
     const deliveryAddress = parseOptionalText(session.metadata?.deliveryAddress, 240);
     const notes = parseOptionalText(session.metadata?.notes, 500);
-    const combinedNotes = buildOrderNotes({
-      fulfillment,
-      deliveryAddress,
-      notes,
-    });
+    const scheduledDateRaw = parseOptionalText(session.metadata?.scheduledDate, 10);
+    const scheduledDate =
+      scheduledDateRaw && isValidDateString(scheduledDateRaw) ? scheduledDateRaw : null;
+    const scheduledTimeSlotRaw = parseOptionalText(session.metadata?.scheduledTimeSlot, 5);
+    const scheduledTimeSlot =
+      scheduledTimeSlotRaw && isValidTimeSlot(scheduledTimeSlotRaw)
+        ? scheduledTimeSlotRaw
+        : null;
 
     await prisma.$transaction(async (tx) => {
       const existing = await tx.order.findUnique({
@@ -99,11 +82,14 @@ export async function POST(request: Request) {
             items: session.metadata?.items ?? "[]",
             total: (session.amount_total ?? 0) / 100,
             fulfillment,
+            scheduledDate,
+            scheduledTimeSlot,
+            deliveryAddress,
             stripeSessionId: session.id,
             status: "paid",
             customerName: session.customer_details?.name ?? null,
             customerPhone: session.customer_details?.phone ?? null,
-            notes: combinedNotes,
+            notes,
           },
         });
         return;
@@ -115,9 +101,12 @@ export async function POST(request: Request) {
           items: session.metadata?.items ?? existing.items,
           total: (session.amount_total ?? 0) / 100,
           fulfillment,
+          scheduledDate: scheduledDate ?? existing.scheduledDate,
+          scheduledTimeSlot: scheduledTimeSlot ?? existing.scheduledTimeSlot,
+          deliveryAddress: deliveryAddress ?? existing.deliveryAddress,
           customerName: session.customer_details?.name ?? existing.customerName,
           customerPhone: session.customer_details?.phone ?? existing.customerPhone,
-          notes: combinedNotes ?? existing.notes,
+          notes: notes ?? existing.notes,
           status:
             existing.status === "new" || existing.status === "paid"
               ? "paid"

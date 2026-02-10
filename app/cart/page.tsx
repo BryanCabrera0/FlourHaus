@@ -3,9 +3,19 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCartActions, useCartState } from "../components/CartProvider";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { formatCurrency } from "@/lib/format";
 import type { FulfillmentMethod } from "@/lib/types";
+import {
+  addDays,
+  formatTimeSlotLabel,
+  getSlotsForDate,
+  getTodayDateString,
+  isSlotAvailable,
+  normalizeScheduleConfig,
+  STORE_TIME_ZONE,
+  type FulfillmentScheduleConfig,
+} from "@/lib/fulfillmentSchedule";
 
 const CHECKOUT_SECRET_STORAGE_KEY = "flourhaus:checkoutClientSecret";
 const CHECKOUT_SECRET_STORAGE_EVENT = "flourhaus:checkout-secret";
@@ -16,6 +26,10 @@ export default function CartPage() {
   const router = useRouter();
 
   const [fulfillment, setFulfillment] = useState<FulfillmentMethod>("pickup");
+  const [schedule, setSchedule] = useState<FulfillmentScheduleConfig | null>(null);
+  const [scheduleError, setScheduleError] = useState<string | null>(null);
+  const [scheduledDate, setScheduledDate] = useState("");
+  const [scheduledTimeSlot, setScheduledTimeSlot] = useState("");
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryCheck, setDeliveryCheck] = useState<{
     eligible: boolean;
@@ -28,6 +42,66 @@ export default function CartPage() {
   const [orderNotes, setOrderNotes] = useState("");
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  const scheduleTimezone = schedule?.timezone ?? STORE_TIME_ZONE;
+  const todayDate = useMemo(
+    () => getTodayDateString(scheduleTimezone),
+    [scheduleTimezone],
+  );
+  const maxDate = useMemo(() => {
+    if (!schedule) return "";
+    return addDays(todayDate, schedule.maxDaysAhead) ?? "";
+  }, [schedule, todayDate]);
+
+  const availableSlots = useMemo(() => {
+    if (!schedule || !scheduledDate) {
+      return [];
+    }
+    return getSlotsForDate(schedule, fulfillment, scheduledDate);
+  }, [fulfillment, schedule, scheduledDate]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadSchedule() {
+      setScheduleError(null);
+      try {
+        const response = await fetch("/api/schedule", {
+          method: "GET",
+          cache: "no-store",
+        });
+        const payload = (await response.json().catch(() => null)) as
+          | { schedule?: FulfillmentScheduleConfig; error?: string }
+          | null;
+
+        if (!response.ok || !payload?.schedule) {
+          throw new Error(payload?.error ?? "Unable to load scheduling settings.");
+        }
+
+        if (!cancelled) {
+          setSchedule(normalizeScheduleConfig(payload.schedule));
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setSchedule(null);
+          setScheduleError(
+            err instanceof Error ? err.message : "Unable to load scheduling settings.",
+          );
+        }
+      }
+    }
+
+    void loadSchedule();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (scheduledTimeSlot && !availableSlots.includes(scheduledTimeSlot)) {
+      setScheduledTimeSlot("");
+    }
+  }, [availableSlots, scheduledTimeSlot]);
 
   if (items.length === 0) {
     return (
@@ -54,6 +128,22 @@ export default function CartPage() {
         throw new Error("Please enter a delivery address.");
       }
 
+      if (!schedule) {
+        throw new Error("Scheduling is still loading. Please try again.");
+      }
+
+      if (!scheduledDate) {
+        throw new Error("Please pick a date for pickup/delivery.");
+      }
+
+      if (!scheduledTimeSlot) {
+        throw new Error("Please choose a time slot.");
+      }
+
+      if (!isSlotAvailable(schedule, fulfillment, scheduledDate, scheduledTimeSlot)) {
+        throw new Error("That time slot is not available. Please choose another.");
+      }
+
       const checkoutItems = items.map((item) => ({
         menuItemId: item.menuItemId,
         variantId: item.variantId,
@@ -66,6 +156,8 @@ export default function CartPage() {
         body: JSON.stringify({
           items: checkoutItems,
           fulfillment,
+          scheduledDate,
+          scheduledTimeSlot,
           notes: orderNotes,
           ...(fulfillment === "delivery" && trimmedDeliveryAddress
             ? { deliveryAddress: trimmedDeliveryAddress }
@@ -154,6 +246,15 @@ export default function CartPage() {
     }
   }
 
+  const checkoutDisabled =
+    isCheckingOut ||
+    !schedule ||
+    !scheduledDate ||
+    !scheduledTimeSlot ||
+    availableSlots.length === 0 ||
+    (fulfillment === "delivery" && !deliveryAddress.trim()) ||
+    (fulfillment === "delivery" && deliveryCheck !== null && !deliveryCheck.eligible);
+
   return (
     <div className="bg-surface">
       <div className="max-w-6xl mx-auto px-6 py-14">
@@ -207,6 +308,8 @@ export default function CartPage() {
               <button
                 onClick={() => {
                   setFulfillment("pickup");
+                  setScheduledDate("");
+                  setScheduledTimeSlot("");
                   setCheckoutError(null);
                 }}
                 className={`flex-1 py-2.5 font-semibold text-sm transition-all ${fulfillment === "pickup" ? "toggle-active" : "toggle-inactive"}`}
@@ -216,6 +319,8 @@ export default function CartPage() {
               <button
                 onClick={() => {
                   setFulfillment("delivery");
+                  setScheduledDate("");
+                  setScheduledTimeSlot("");
                   setCheckoutError(null);
                 }}
                 className={`flex-1 py-2.5 font-semibold text-sm transition-all ${fulfillment === "delivery" ? "toggle-active" : "toggle-inactive"}`}
@@ -275,6 +380,76 @@ export default function CartPage() {
               </div>
             ) : null}
 
+            <div className="mb-6">
+              <p className="text-sm font-medium mb-3 text-fh-muted">
+                Schedule {fulfillment === "pickup" ? "Pickup" : "Delivery"} *
+              </p>
+
+              {scheduleError ? (
+                <p className="feedback-error text-sm p-3 rounded-lg">
+                  {scheduleError}
+                </p>
+              ) : !schedule ? (
+                <p className="text-sm text-fh-muted">Loading available times…</p>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium block mb-2 text-fh-muted">
+                        Date *
+                      </label>
+                      <input
+                        type="date"
+                        value={scheduledDate}
+                        onChange={(event) => {
+                          setScheduledDate(event.target.value);
+                          setCheckoutError(null);
+                        }}
+                        min={todayDate}
+                        max={maxDate}
+                        className="w-full rounded-xl px-3 py-2.5 text-sm input-soft"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium block mb-2 text-fh-muted">
+                        Time Slot *
+                      </label>
+                      <select
+                        value={scheduledTimeSlot}
+                        onChange={(event) => {
+                          setScheduledTimeSlot(event.target.value);
+                          setCheckoutError(null);
+                        }}
+                        className="w-full rounded-xl px-3 py-2.5 text-sm input-soft"
+                        disabled={!scheduledDate || availableSlots.length === 0}
+                        required
+                      >
+                        <option value="" disabled>
+                          {scheduledDate ? "Choose a time slot" : "Choose a date first"}
+                        </option>
+                        {availableSlots.map((slot) => (
+                          <option key={slot} value={slot}>
+                            {formatTimeSlotLabel(slot)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {scheduledDate && availableSlots.length === 0 ? (
+                    <p className="feedback-error text-xs mt-3 p-3 rounded-lg">
+                      No time slots are available for that day. Please choose a different date.
+                    </p>
+                  ) : null}
+
+                  <p className="text-xs text-fh-muted mt-2">
+                    You can schedule up to {schedule.maxDaysAhead} days ahead.
+                  </p>
+                </>
+              )}
+            </div>
+
             <label className="text-sm font-medium block mb-2 text-fh-muted">
               Order Notes (optional)
             </label>
@@ -293,7 +468,7 @@ export default function CartPage() {
 
             <button
               onClick={handleCheckout}
-              disabled={isCheckingOut}
+              disabled={checkoutDisabled}
               className="w-full btn-primary py-3.5 text-sm disabled:opacity-50"
             >
               {isCheckingOut ? "Preparing..." : "Checkout"}
