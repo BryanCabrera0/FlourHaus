@@ -20,12 +20,26 @@ export async function getStoreSettingsSnapshot(
 ): Promise<StoreSettingsSnapshot> {
   const defaults = getDefaultScheduleConfig();
 
-  const settings = await db.storeSettings.upsert({
-    where: { id: 1 },
-    create: { id: 1, fulfillmentSchedule: defaults },
-    update: {},
-    select: { stripeAccountId: true, fulfillmentSchedule: true },
-  });
+  const select = { stripeAccountId: true, fulfillmentSchedule: true } as const;
+
+  const settings =
+    (await db.storeSettings.findUnique({
+      where: { id: 1 },
+      select,
+    })) ??
+    (await (async () => {
+      try {
+        return await db.storeSettings.create({
+          data: { id: 1, fulfillmentSchedule: defaults },
+          select,
+        });
+      } catch {
+        // Another request likely created the row at the same time.
+        const existing = await db.storeSettings.findUnique({ where: { id: 1 }, select });
+        if (existing) return existing;
+        throw new Error("Failed to initialize store settings.");
+      }
+    })());
 
   const schedule = normalizeScheduleConfig(settings.fulfillmentSchedule);
 
@@ -45,4 +59,3 @@ export async function getStoreSettingsSnapshot(
     schedule,
   };
 }
-
