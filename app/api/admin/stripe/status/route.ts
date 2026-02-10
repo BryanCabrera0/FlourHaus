@@ -123,6 +123,19 @@ export async function GET(request: NextRequest) {
         : null,
     };
   } catch (error) {
+    const code = (error as { code?: unknown })?.code;
+    const statusCode = (error as { statusCode?: unknown })?.statusCode;
+
+    // The stored connected account ID may be from a different Stripe mode (test vs live)
+    // or a different platform secret key. Clear it so the owner can reconnect cleanly.
+    if (
+      code === "resource_missing" ||
+      code === "platform_account_required" ||
+      statusCode === 404
+    ) {
+      return NextResponse.json(getEmptyStatus());
+    }
+
     const details = error instanceof Error && error.message ? ` ${error.message}` : "";
     return NextResponse.json(
       { error: `Unable to retrieve Stripe account status.${details}` },

@@ -13,6 +13,7 @@ import {
   isValidTimeSlot,
 } from "@/lib/fulfillmentSchedule";
 import { getStoreSettingsSnapshot } from "@/lib/storeSettings";
+import { resolveConnectedStripeAccountId } from "@/lib/stripeConnect";
 
 export const runtime = "nodejs";
 
@@ -174,7 +175,10 @@ export async function POST(request: Request) {
       }
     }
 
-    const connectedAccountId = storeSettings.stripeAccountId;
+    const connectedAccountId = await resolveConnectedStripeAccountId(
+      stripe,
+      storeSettings.stripeAccountId,
+    );
     const item: OrderItem = {
       id: customOrder.id,
       name: `Custom Order #${customOrder.id}`,

@@ -14,6 +14,7 @@ import {
 import prisma from "@/lib/prisma";
 import { getStoreSettingsSnapshot } from "@/lib/storeSettings";
 import { isCookieCategory } from "@/lib/menuItemVariantRules";
+import { resolveConnectedStripeAccountId } from "@/lib/stripeConnect";
 
 export const runtime = "nodejs";
 
@@ -288,7 +289,10 @@ export async function POST(request: Request) {
 
     const normalizedStripeItems = normalizedItems.filter((item): item is NonNullable<typeof item> => item !== null);
 
-    const connectedAccountId = storeSettings.stripeAccountId;
+    const connectedAccountId = await resolveConnectedStripeAccountId(
+      stripe,
+      storeSettings.stripeAccountId,
+    );
 
     const session = await stripe.checkout.sessions.create({
       ui_mode: "embedded",
