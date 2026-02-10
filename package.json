@@ -7,6 +7,7 @@
     "predev": "npm run prisma:generate",
     "prebuild": "npm run prisma:generate",
     "postinstall": "npm run prisma:generate",
+    "vercel-build": "npm run prisma:generate && prisma migrate deploy && next build",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
