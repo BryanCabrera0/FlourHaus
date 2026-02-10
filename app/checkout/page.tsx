@@ -6,47 +6,27 @@ import { useMemo, useSyncExternalStore } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { EmbeddedCheckout, EmbeddedCheckoutProvider } from "@stripe/react-stripe-js";
 import { useCartActions } from "../components/CartProvider";
-
-const CHECKOUT_SECRET_STORAGE_KEY = "flourhaus:checkoutClientSecret";
-const CHECKOUT_SECRET_STORAGE_EVENT = "flourhaus:checkout-secret";
-const SSR_SNAPSHOT = "__FLOUR_HAUS_SSR__";
+import {
+  CHECKOUT_SECRET_SSR_SNAPSHOT,
+  clearCheckoutClientSecret,
+  readCheckoutClientSecret,
+  subscribeCheckoutClientSecret,
+} from "@/lib/checkoutClientSecret";
 
 const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim();
 const stripePromise = publishableKey ? loadStripe(publishableKey) : null;
-
-function subscribe(_onStoreChange: () => void) {
-  function handleChange() {
-    _onStoreChange();
-  }
-
-  window.addEventListener(CHECKOUT_SECRET_STORAGE_EVENT, handleChange);
-  window.addEventListener("storage", handleChange);
-
-  return () => {
-    window.removeEventListener(CHECKOUT_SECRET_STORAGE_EVENT, handleChange);
-    window.removeEventListener("storage", handleChange);
-  };
-}
-
-function getSnapshot(): string | null {
-  return sessionStorage.getItem(CHECKOUT_SECRET_STORAGE_KEY);
-}
-
-function getServerSnapshot(): string {
-  return SSR_SNAPSHOT;
-}
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { clearCart } = useCartActions();
 
   const storedSecret = useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getServerSnapshot,
+    subscribeCheckoutClientSecret,
+    readCheckoutClientSecret,
+    () => CHECKOUT_SECRET_SSR_SNAPSHOT,
   );
 
-  const isHydrating = storedSecret === SSR_SNAPSHOT;
+  const isHydrating = storedSecret === CHECKOUT_SECRET_SSR_SNAPSHOT;
   const clientSecret = !isHydrating ? storedSecret : null;
   const error = !isHydrating && !clientSecret
     ? "No checkout session found. Please start checkout from your cart."
@@ -57,8 +37,7 @@ export default function CheckoutPage() {
     return {
       clientSecret,
       onComplete: () => {
-        sessionStorage.removeItem(CHECKOUT_SECRET_STORAGE_KEY);
-        window.dispatchEvent(new Event(CHECKOUT_SECRET_STORAGE_EVENT));
+        clearCheckoutClientSecret();
         clearCart();
         router.replace("/success");
       },
@@ -66,8 +45,7 @@ export default function CheckoutPage() {
   }, [clientSecret, clearCart, router]);
 
   function handleBackToCart() {
-    sessionStorage.removeItem(CHECKOUT_SECRET_STORAGE_KEY);
-    window.dispatchEvent(new Event(CHECKOUT_SECRET_STORAGE_EVENT));
+    clearCheckoutClientSecret();
     router.push("/cart");
   }
 

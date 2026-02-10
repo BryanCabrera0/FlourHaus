@@ -6,6 +6,7 @@ import { useCartActions, useCartState } from "../components/CartProvider";
 import { useEffect, useMemo, useState } from "react";
 import { formatCurrency } from "@/lib/format";
 import type { FulfillmentMethod } from "@/lib/types";
+import { writeCheckoutClientSecret } from "@/lib/checkoutClientSecret";
 import {
   addDays,
   formatTimeSlotLabel,
@@ -16,9 +17,6 @@ import {
   STORE_TIME_ZONE,
   type FulfillmentScheduleConfig,
 } from "@/lib/fulfillmentSchedule";
-
-const CHECKOUT_SECRET_STORAGE_KEY = "flourhaus:checkoutClientSecret";
-const CHECKOUT_SECRET_STORAGE_EVENT = "flourhaus:checkout-secret";
 
 export default function CartPage() {
   const { items, total } = useCartState();
@@ -190,8 +188,7 @@ export default function CartPage() {
         throw new Error("Unable to start checkout right now. Please try again.");
       }
 
-      sessionStorage.setItem(CHECKOUT_SECRET_STORAGE_KEY, clientSecret);
-      window.dispatchEvent(new Event(CHECKOUT_SECRET_STORAGE_EVENT));
+      writeCheckoutClientSecret(clientSecret);
       router.push("/checkout");
     } catch (err) {
       setCheckoutError(
