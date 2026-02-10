@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { FulfillmentMethod } from "@/lib/types";
-import { getBaseUrl, getStripeClient } from "@/lib/stripe";
+import { getStripeClient } from "@/lib/stripe";
 import {
   DELIVERY_MAX_DISTANCE_MILES,
   DELIVERY_ORIGIN_ADDRESS,
@@ -137,8 +137,6 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-
-  const baseUrl = getBaseUrl(request);
 
   try {
     const storeSettings = await getStoreSettingsSnapshot(prisma);
@@ -321,7 +319,6 @@ export async function POST(request: Request) {
       },
       phone_number_collection: { enabled: true },
       mode: "payment",
-      return_url: new URL("/checkout", baseUrl).toString(),
     });
 
     if (!session.client_secret) {
@@ -332,7 +329,8 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ clientSecret: session.client_secret });
-  } catch {
+  } catch (error) {
+    console.error("Stripe checkout session creation failed", error);
     return NextResponse.json(
       { error: "Unable to create checkout session" },
       { status: 502 }

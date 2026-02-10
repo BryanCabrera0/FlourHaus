@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import type { FulfillmentMethod, OrderItem } from "@/lib/types";
-import { getBaseUrl, getStripeClient } from "@/lib/stripe";
+import { getStripeClient } from "@/lib/stripe";
 import {
   DELIVERY_MAX_DISTANCE_MILES,
   DELIVERY_ORIGIN_ADDRESS,
@@ -90,8 +90,6 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
-
-  const baseUrl = getBaseUrl(request);
 
   const customOrder = await prisma.customOrderRequest.findFirst({
     where: { paymentToken: payload.token },
@@ -221,7 +219,6 @@ export async function POST(request: Request) {
       },
       phone_number_collection: { enabled: true },
       mode: "payment",
-      return_url: new URL(`/custom-order/pay/${payload.token}`, baseUrl).toString(),
     });
 
     if (!session.client_secret) {
@@ -229,8 +226,8 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ clientSecret: session.client_secret });
-  } catch {
+  } catch (error) {
+    console.error("Stripe custom order payment session creation failed", error);
     return NextResponse.json({ error: "Unable to create payment session." }, { status: 502 });
   }
 }
-
