@@ -11,6 +11,7 @@ import {
   addDays,
   formatTimeSlotLabel,
   getSlotsForDate,
+  getMinAllowedDateString,
   getTodayDateString,
   isSlotAvailable,
   normalizeScheduleConfig,
@@ -62,6 +63,10 @@ export default function CustomOrderPayClient({
     () => getTodayDateString(scheduleTimezone),
     [scheduleTimezone],
   );
+  const minDate = useMemo(() => {
+    if (!schedule) return todayDate;
+    return getMinAllowedDateString(schedule);
+  }, [schedule, todayDate]);
   const maxDate = useMemo(() => {
     if (!schedule) return "";
     return addDays(todayDate, schedule.maxDaysAhead) ?? "";
@@ -113,6 +118,14 @@ export default function CustomOrderPayClient({
       setScheduledTimeSlot("");
     }
   }, [availableSlots, scheduledTimeSlot]);
+
+  useEffect(() => {
+    if (!scheduledDate) return;
+    if (scheduledDate < minDate) {
+      setScheduledDate("");
+      setScheduledTimeSlot("");
+    }
+  }, [minDate, scheduledDate]);
 
   async function handleDeliveryCheck() {
     const address = deliveryAddress.trim();
@@ -258,7 +271,7 @@ export default function CustomOrderPayClient({
                     setScheduledDate(event.target.value);
                     setPaymentError(null);
                   }}
-                  min={todayDate}
+                  min={minDate}
                   max={maxDate}
                   className="w-full rounded-xl px-3 py-2.5 text-sm input-soft"
                   required
@@ -297,7 +310,8 @@ export default function CustomOrderPayClient({
             ) : null}
 
             <p className="text-xs text-fh-muted mt-2">
-              You can schedule up to {schedule.maxDaysAhead} days ahead.
+              Earliest available date: {minDate}. You can schedule up to{" "}
+              {schedule.maxDaysAhead} days ahead.
             </p>
           </>
         )}
@@ -403,4 +417,3 @@ export default function CustomOrderPayClient({
     </div>
   );
 }
-

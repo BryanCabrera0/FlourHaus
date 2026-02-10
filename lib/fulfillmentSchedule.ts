@@ -18,7 +18,18 @@ export type WeeklySlots = Record<DayKey, string[]>;
 export type FulfillmentScheduleConfigV1 = {
   version: 1;
   timezone: string;
+  /**
+   * Minimum number of days from "today" (in the store timezone) that customers
+   * are allowed to schedule. Example: 1 => no same-day orders.
+   */
+  minDaysAhead: number;
   maxDaysAhead: number;
+  /**
+   * If set, "tomorrow" becomes unavailable once the current time (store timezone)
+   * is at/after this cutoff. Example: "17:00" => next-day orders close at 5pm.
+   * Use null to disable this extra rule.
+   */
+  nextDayCutoffTime: string | null;
   pickup: WeeklySlots;
   delivery: WeeklySlots;
 };
@@ -58,7 +69,9 @@ export function getDefaultScheduleConfig(): FulfillmentScheduleConfig {
   return {
     version: 1,
     timezone: STORE_TIME_ZONE,
+    minDaysAhead: 1,
     maxDaysAhead: 21,
+    nextDayCutoffTime: "17:00",
     pickup: weekly,
     delivery: weekly,
   };
@@ -98,16 +111,39 @@ export function normalizeScheduleConfig(value: unknown): FulfillmentScheduleConf
   const obj = value as Record<string, unknown>;
   const version = obj.version === 1 ? 1 : 1;
 
+  const minDaysAheadRaw =
+    typeof obj.minDaysAhead === "number" ? obj.minDaysAhead : Number(obj.minDaysAhead);
+  const minDaysAhead = Number.isInteger(minDaysAheadRaw)
+    ? Math.min(60, Math.max(0, minDaysAheadRaw))
+    : defaults.minDaysAhead;
+
   const maxDaysAheadRaw =
     typeof obj.maxDaysAhead === "number" ? obj.maxDaysAhead : Number(obj.maxDaysAhead);
   const maxDaysAhead = Number.isInteger(maxDaysAheadRaw)
     ? Math.min(60, Math.max(1, maxDaysAheadRaw))
     : defaults.maxDaysAhead;
 
+  const nextDayCutoffInput = obj.nextDayCutoffTime;
+  const nextDayCutoffNormalized =
+    nextDayCutoffInput === null
+      ? null
+      : typeof nextDayCutoffInput === "string"
+        ? nextDayCutoffInput.trim()
+        : undefined;
+
+  const nextDayCutoffTime =
+    nextDayCutoffNormalized === null
+      ? null
+      : nextDayCutoffNormalized && isValidTimeSlot(nextDayCutoffNormalized)
+        ? nextDayCutoffNormalized
+        : defaults.nextDayCutoffTime;
+
   return {
     version,
     timezone: STORE_TIME_ZONE,
+    minDaysAhead,
     maxDaysAhead,
+    nextDayCutoffTime,
     pickup: normalizeWeeklySlots(obj.pickup),
     delivery: normalizeWeeklySlots(obj.delivery),
   };
@@ -138,6 +174,47 @@ export function getTodayDateString(timeZone: string, now = new Date()): string {
   return `${byType.year}-${byType.month}-${byType.day}`;
 }
 
+export function getNowTimeString(timeZone: string, now = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(now);
+
+  const byType = Object.fromEntries(
+    parts.filter((part) => part.type !== "literal").map((part) => [part.type, part.value]),
+  ) as Record<string, string>;
+
+  return `${byType.hour}:${byType.minute}`;
+}
+
+export function getMinAllowedDateString(
+  schedule: FulfillmentScheduleConfig,
+  now = new Date(),
+): string {
+  const today = getTodayDateString(schedule.timezone, now);
+  const baseMin =
+    typeof schedule.minDaysAhead === "number" && Number.isInteger(schedule.minDaysAhead)
+      ? Math.min(60, Math.max(0, schedule.minDaysAhead))
+      : 0;
+
+  const baseMinDate = addDays(today, baseMin) ?? today;
+
+  const tomorrow = addDays(today, 1);
+  const cutoff = schedule.nextDayCutoffTime;
+  if (!tomorrow || baseMinDate !== tomorrow || !cutoff || !isValidTimeSlot(cutoff)) {
+    return baseMinDate;
+  }
+
+  const nowTime = getNowTimeString(schedule.timezone, now);
+  if (nowTime >= cutoff) {
+    return addDays(today, 2) ?? baseMinDate;
+  }
+
+  return baseMinDate;
+}
+
 export function dateIsWithinRange(
   schedule: FulfillmentScheduleConfig,
   dateString: string,
@@ -146,10 +223,11 @@ export function dateIsWithinRange(
   if (!isValidDateString(dateString)) return false;
 
   const today = getTodayDateString(schedule.timezone, now);
+  const earliest = getMinAllowedDateString(schedule, now);
   const latest = addDays(today, schedule.maxDaysAhead);
   if (!latest) return false;
 
-  return dateString >= today && dateString <= latest;
+  return dateString >= earliest && dateString <= latest;
 }
 
 export function getDayKeyFromDate(dateString: string): DayKey | null {
@@ -224,4 +302,3 @@ export function formatDateLabel(dateString: string): string {
     day: "numeric",
   }).format(dt);
 }
-

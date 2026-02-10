@@ -287,6 +287,82 @@ export default function AdminSchedulingManager({ initialSchedule }: Props) {
             <p className="text-xs mt-1 text-fh-muted">
               Time zone: <span className="font-semibold">{schedule.timezone}</span>
             </p>
+
+            <div className="mt-6 pt-5 border-t surface-divider">
+              <p className="kicker kicker-accent mb-2">Lead Time Rules</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="admin-label">Minimum days ahead</label>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <input
+                      type="number"
+                      min={0}
+                      max={60}
+                      step={1}
+                      value={schedule.minDaysAhead}
+                      onChange={(e) => {
+                        const value = Number(e.target.value);
+                        if (!Number.isFinite(value)) return;
+                        setSchedule((prev) => normalizeScheduleConfig({ ...prev, minDaysAhead: value }));
+                      }}
+                      inputMode="numeric"
+                      className="admin-input w-[140px]"
+                      disabled={busy}
+                    />
+                    <span className="text-sm text-fh-muted">days</span>
+                  </div>
+                  <p className="text-xs mt-1 text-fh-muted">
+                    Set to <span className="font-semibold">1</span> to block same-day orders.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="admin-label">Next-day cutoff</label>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <label className="flex items-center gap-2 text-sm text-fh-heading font-semibold">
+                      <input
+                        type="checkbox"
+                        checked={schedule.nextDayCutoffTime !== null}
+                        onChange={(e) =>
+                          setSchedule((prev) =>
+                            normalizeScheduleConfig({
+                              ...prev,
+                              nextDayCutoffTime: e.target.checked
+                                ? prev.nextDayCutoffTime && isValidTimeSlot(prev.nextDayCutoffTime)
+                                  ? prev.nextDayCutoffTime
+                                  : "17:00"
+                                : null,
+                            }),
+                          )
+                        }
+                        disabled={busy}
+                        className="h-4 w-4 accent-[var(--fh-accent-primary)]"
+                      />
+                      Enable cutoff
+                    </label>
+                    <input
+                      type="time"
+                      step={300}
+                      value={schedule.nextDayCutoffTime ?? ""}
+                      onChange={(e) => {
+                        const value = e.target.value.trim();
+                        setSchedule((prev) =>
+                          normalizeScheduleConfig({
+                            ...prev,
+                            nextDayCutoffTime: value ? value : null,
+                          }),
+                        );
+                      }}
+                      disabled={busy || schedule.nextDayCutoffTime === null}
+                      className="admin-input w-[160px]"
+                    />
+                  </div>
+                  <p className="text-xs mt-1 text-fh-muted">
+                    When enabled, tomorrow becomes unavailable at/after the cutoff time.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
