@@ -1,14 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCartActions, useCartState } from "../components/CartProvider";
 import { useState } from "react";
 import { formatCurrency } from "@/lib/format";
 import type { FulfillmentMethod } from "@/lib/types";
 
+const CHECKOUT_SECRET_STORAGE_KEY = "flourhaus:checkoutClientSecret";
+const CHECKOUT_SECRET_STORAGE_EVENT = "flourhaus:checkout-secret";
+
 export default function CartPage() {
   const { items, total } = useCartState();
   const { removeFromCart } = useCartActions();
+  const router = useRouter();
 
   const [fulfillment, setFulfillment] = useState<FulfillmentMethod>("pickup");
   const [deliveryAddress, setDeliveryAddress] = useState("");
@@ -81,19 +86,21 @@ export default function CartPage() {
         throw new Error(errorMessage);
       }
 
-      const checkoutUrl =
+      const clientSecret =
         typeof data === "object" &&
         data !== null &&
-        "url" in data &&
-        typeof data.url === "string"
-          ? data.url
+        "clientSecret" in data &&
+        typeof data.clientSecret === "string"
+          ? data.clientSecret
           : null;
 
-      if (!response.ok || !checkoutUrl) {
-        throw new Error("Failed to create checkout session");
+      if (!clientSecret) {
+        throw new Error("Unable to start checkout right now. Please try again.");
       }
 
-      window.location.assign(checkoutUrl);
+      sessionStorage.setItem(CHECKOUT_SECRET_STORAGE_KEY, clientSecret);
+      window.dispatchEvent(new Event(CHECKOUT_SECRET_STORAGE_EVENT));
+      router.push("/checkout");
     } catch (err) {
       setCheckoutError(
         err instanceof Error
@@ -289,7 +296,7 @@ export default function CartPage() {
               disabled={isCheckingOut}
               className="w-full btn-primary py-3.5 text-sm disabled:opacity-50"
             >
-              {isCheckingOut ? "Processing..." : "Checkout"}
+              {isCheckingOut ? "Preparing..." : "Checkout"}
             </button>
           </div>
         </div>

@@ -260,6 +260,8 @@ export async function POST(request: Request) {
         : null;
 
     const session = await stripe.checkout.sessions.create({
+      ui_mode: "embedded",
+      redirect_on_completion: "never",
       payment_method_types: ["card"],
       line_items: normalizedStripeItems.map((item) => ({
         price_data: {
@@ -288,18 +290,17 @@ export async function POST(request: Request) {
       },
       phone_number_collection: { enabled: true },
       mode: "payment",
-      success_url: new URL("/success", baseUrl).toString(),
-      cancel_url: new URL("/cart", baseUrl).toString(),
+      return_url: new URL("/checkout", baseUrl).toString(),
     });
 
-    if (!session.url) {
+    if (!session.client_secret) {
       return NextResponse.json(
-        { error: "Stripe checkout URL is unavailable" },
+        { error: "Stripe checkout client secret is unavailable" },
         { status: 502 }
       );
     }
 
-    return NextResponse.json({ url: session.url });
+    return NextResponse.json({ clientSecret: session.client_secret });
   } catch {
     return NextResponse.json(
       { error: "Unable to create checkout session" },
