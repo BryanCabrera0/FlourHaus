@@ -98,6 +98,52 @@
   color: var(--fh-accent-primary);
 }
 
+.nav-btn {
+  font-family: var(--font-abril), ui-serif, Georgia, serif;
+  color: var(--fh-heading);
+  background-color: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(45, 40, 80, 0.14);
+  border-radius: 9999px;
+  padding: 0.55rem 1rem;
+  line-height: 1;
+  box-shadow:
+    0 3px 10px rgba(45, 40, 80, 0.08),
+    0 10px 24px rgba(45, 40, 80, 0.06);
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.nav-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(107, 91, 149, 0.28);
+  box-shadow:
+    0 6px 14px rgba(45, 40, 80, 0.1),
+    0 14px 34px rgba(45, 40, 80, 0.08);
+}
+
+.nav-btn:active {
+  transform: translateY(0);
+}
+
+.nav-btn:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(107, 91, 149, 0.25),
+    0 6px 14px rgba(45, 40, 80, 0.1),
+    0 14px 34px rgba(45, 40, 80, 0.08);
+}
+
+.nav-btn-menu:hover {
+  background-color: rgba(204, 241, 255, 0.72);
+}
+
+.nav-btn-about:hover {
+  background-color: rgba(255, 204, 225, 0.55);
+}
+
 .footer-link {
   color: var(--fh-text-soft);
   transition: color 0.2s ease;

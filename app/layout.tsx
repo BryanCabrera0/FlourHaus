@@ -42,8 +42,12 @@ export default function RootLayout({
                   Flour Haus
                 </Link>
                 <div className="flex gap-4 sm:gap-7 items-center">
-                  <Link href="/menu" className="nav-link font-semibold text-sm uppercase tracking-wider">Menu</Link>
-                  <Link href="/about" className="nav-link font-semibold text-sm uppercase tracking-wider">About</Link>
+                  <Link href="/menu" className="nav-btn nav-btn-menu">
+                    Menu
+                  </Link>
+                  <Link href="/about" className="nav-btn nav-btn-about">
+                    About
+                  </Link>
                   <CartLink />
                 </div>
               </div>
