@@ -13,6 +13,38 @@ function parseFulfillment(value: string | undefined): "pickup" | "delivery" {
   return "pickup";
 }
 
+function parseOptionalText(value: unknown, maxLength: number): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+  return trimmed.length > maxLength ? trimmed.slice(0, maxLength) : trimmed;
+}
+
+function buildOrderNotes({
+  fulfillment,
+  deliveryAddress,
+  notes,
+}: {
+  fulfillment: "pickup" | "delivery";
+  deliveryAddress: string | null;
+  notes: string | null;
+}): string | null {
+  if (fulfillment !== "delivery" || !deliveryAddress) {
+    return notes;
+  }
+
+  const parts = [`Delivery address: ${deliveryAddress}`];
+  if (notes) {
+    parts.push(`Notes: ${notes}`);
+  }
+
+  return parts.join("\n");
+}
+
 export async function POST(request: Request) {
   const body = await request.text();
   const signature = request.headers.get("stripe-signature");
@@ -48,6 +80,13 @@ export async function POST(request: Request) {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     const fulfillment = parseFulfillment(session.metadata?.fulfillment);
+    const deliveryAddress = parseOptionalText(session.metadata?.deliveryAddress, 240);
+    const notes = parseOptionalText(session.metadata?.notes, 500);
+    const combinedNotes = buildOrderNotes({
+      fulfillment,
+      deliveryAddress,
+      notes,
+    });
 
     await prisma.$transaction(async (tx) => {
       const existing = await tx.order.findUnique({
@@ -64,7 +103,7 @@ export async function POST(request: Request) {
             status: "paid",
             customerName: session.customer_details?.name ?? null,
             customerPhone: session.customer_details?.phone ?? null,
-            notes: session.metadata?.notes ?? null,
+            notes: combinedNotes,
           },
         });
         return;
@@ -78,7 +117,7 @@ export async function POST(request: Request) {
           fulfillment,
           customerName: session.customer_details?.name ?? existing.customerName,
           customerPhone: session.customer_details?.phone ?? existing.customerPhone,
-          notes: session.metadata?.notes ?? existing.notes,
+          notes: combinedNotes ?? existing.notes,
           status:
             existing.status === "new" || existing.status === "paid"
               ? "paid"

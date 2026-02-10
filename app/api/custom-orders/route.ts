@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { FULFILLMENT_METHODS, type FulfillmentMethod } from "@/lib/types";
 import { isEmailSendingConfigured, sendTransactionalEmail } from "@/lib/email";
+import {
+  DELIVERY_MAX_DISTANCE_MILES,
+  DELIVERY_ORIGIN_ADDRESS,
+  getDeliveryEligibility,
+} from "@/lib/delivery";
 
 export const runtime = "nodejs";
 
@@ -13,6 +18,7 @@ type CreateCustomOrderBody = {
   details?: unknown;
   requestedDate?: unknown;
   fulfillmentPreference?: unknown;
+  deliveryAddress?: unknown;
   budget?: unknown;
 };
 
@@ -24,6 +30,7 @@ type ParsedBody = {
   requestDetails: string;
   requestedDate: Date | null;
   fulfillmentPreference: FulfillmentMethod;
+  deliveryAddress: string | null;
   budget: string | null;
 };
 
@@ -114,24 +121,36 @@ function parseBody(body: CreateCustomOrderBody | null): ParsedBody | null {
   const budget = parseOptionalText(body?.budget, 120);
   const requestedDate = parseOptionalRequestedDate(body?.requestedDate);
   const fulfillmentPreference = parseRequiredFulfillment(body?.fulfillmentPreference);
+  const deliveryAddress = parseOptionalText(body?.deliveryAddress, 240);
 
   if (
     customerPhone === undefined ||
     budget === undefined ||
     requestedDate === undefined ||
-    fulfillmentPreference === undefined
+    fulfillmentPreference === undefined ||
+    deliveryAddress === undefined
   ) {
     return null;
   }
+
+  if (fulfillmentPreference === "delivery" && !deliveryAddress) {
+    return null;
+  }
+
+  const requestDetails =
+    fulfillmentPreference === "delivery" && deliveryAddress
+      ? `Delivery address: ${deliveryAddress}\n\n${details}`
+      : details;
 
   return {
     customerName: name,
     customerEmail: email,
     customerPhone,
     desiredItems,
-    requestDetails: details,
+    requestDetails,
     requestedDate,
     fulfillmentPreference,
+    deliveryAddress,
     budget,
   };
 }
@@ -169,8 +188,40 @@ export async function POST(request: Request) {
   }
 
   try {
+    if (parsedBody.fulfillmentPreference === "delivery") {
+      const address = parsedBody.deliveryAddress;
+      if (!address) {
+        return NextResponse.json(
+          { error: "Delivery address is required for delivery requests." },
+          { status: 400 },
+        );
+      }
+
+      const eligibility = await getDeliveryEligibility(address);
+      if (!eligibility.ok) {
+        return NextResponse.json({ error: eligibility.error }, { status: 400 });
+      }
+      if (!eligibility.eligible) {
+        return NextResponse.json(
+          {
+            error: `Delivery is available within ${DELIVERY_MAX_DISTANCE_MILES} miles of ${DELIVERY_ORIGIN_ADDRESS}. Your address is about ${eligibility.distanceMiles} miles away.`,
+          },
+          { status: 400 },
+        );
+      }
+    }
+
     const created = await prisma.customOrderRequest.create({
-      data: parsedBody,
+      data: {
+        customerName: parsedBody.customerName,
+        customerEmail: parsedBody.customerEmail,
+        customerPhone: parsedBody.customerPhone,
+        desiredItems: parsedBody.desiredItems,
+        requestDetails: parsedBody.requestDetails,
+        requestedDate: parsedBody.requestedDate,
+        fulfillmentPreference: parsedBody.fulfillmentPreference,
+        budget: parsedBody.budget,
+      },
       select: {
         id: true,
       },

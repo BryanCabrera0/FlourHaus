@@ -9,6 +9,7 @@ type FormState = {
   desiredItems: string;
   requestedDate: string;
   fulfillmentPreference: "" | "pickup" | "delivery";
+  deliveryAddress: string;
   budget: string;
   details: string;
 };
@@ -20,6 +21,7 @@ const INITIAL_FORM: FormState = {
   desiredItems: "",
   requestedDate: "",
   fulfillmentPreference: "",
+  deliveryAddress: "",
   budget: "",
   details: "",
 };
@@ -47,6 +49,11 @@ export default function CustomOrderRequestForm() {
 
     if (!form.fulfillmentPreference) {
       setError("Please choose a fulfillment method (pickup or delivery).");
+      return;
+    }
+
+    if (form.fulfillmentPreference === "delivery" && !form.deliveryAddress.trim()) {
+      setError("Please enter a delivery address for delivery requests.");
       return;
     }
 
@@ -145,6 +152,25 @@ export default function CustomOrderRequestForm() {
           </select>
         </div>
       </div>
+
+      {form.fulfillmentPreference === "delivery" ? (
+        <div>
+          <label className="text-sm font-semibold mb-1 block text-fh-body">
+            Delivery Address *
+          </label>
+          <input
+            value={form.deliveryAddress}
+            onChange={(event) => updateField("deliveryAddress", event.target.value)}
+            maxLength={240}
+            className="w-full rounded-xl px-3 py-2.5 text-sm input-soft"
+            placeholder="Street address, city, state, ZIP"
+            required
+          />
+          <p className="text-xs mt-2 text-fh-muted">
+            Delivery requests must be within 5 miles of 33185.
+          </p>
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>

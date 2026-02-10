@@ -11,6 +11,15 @@ export default function CartPage() {
   const { removeFromCart } = useCartActions();
 
   const [fulfillment, setFulfillment] = useState<FulfillmentMethod>("pickup");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [deliveryCheck, setDeliveryCheck] = useState<{
+    eligible: boolean;
+    distanceMiles: number;
+  } | null>(null);
+  const [deliveryCheckError, setDeliveryCheckError] = useState<string | null>(
+    null,
+  );
+  const [isCheckingDelivery, setIsCheckingDelivery] = useState(false);
   const [orderNotes, setOrderNotes] = useState("");
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
@@ -34,6 +43,12 @@ export default function CartPage() {
     setIsCheckingOut(true);
 
     try {
+      const trimmedDeliveryAddress = deliveryAddress.trim();
+
+      if (fulfillment === "delivery" && !trimmedDeliveryAddress) {
+        throw new Error("Please enter a delivery address.");
+      }
+
       const checkoutItems = items.map((item) => ({
         menuItemId: item.menuItemId,
         variantId: item.variantId,
@@ -43,10 +58,29 @@ export default function CartPage() {
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: checkoutItems, fulfillment, notes: orderNotes }),
+        body: JSON.stringify({
+          items: checkoutItems,
+          fulfillment,
+          notes: orderNotes,
+          ...(fulfillment === "delivery" && trimmedDeliveryAddress
+            ? { deliveryAddress: trimmedDeliveryAddress }
+            : {}),
+        }),
       });
 
-      const data: unknown = await response.json();
+      const data: unknown = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        const errorMessage =
+          typeof data === "object" &&
+          data !== null &&
+          "error" in data &&
+          typeof data.error === "string"
+            ? data.error
+            : "Unable to start checkout right now. Please try again.";
+        throw new Error(errorMessage);
+      }
+
       const checkoutUrl =
         typeof data === "object" &&
         data !== null &&
@@ -60,10 +94,56 @@ export default function CartPage() {
       }
 
       window.location.assign(checkoutUrl);
-    } catch {
-      setCheckoutError("Unable to start checkout right now. Please try again.");
+    } catch (err) {
+      setCheckoutError(
+        err instanceof Error
+          ? err.message
+          : "Unable to start checkout right now. Please try again.",
+      );
     } finally {
       setIsCheckingOut(false);
+    }
+  }
+
+  async function handleDeliveryCheck() {
+    const address = deliveryAddress.trim();
+    if (!address || isCheckingDelivery) {
+      return;
+    }
+
+    setDeliveryCheck(null);
+    setDeliveryCheckError(null);
+    setIsCheckingDelivery(true);
+
+    try {
+      const response = await fetch("/api/delivery/eligibility", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ address }),
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | { eligible?: boolean; distanceMiles?: number; error?: string }
+        | null;
+
+      if (!response.ok) {
+        throw new Error(payload?.error ?? "Unable to check delivery address.");
+      }
+
+      if (typeof payload?.eligible !== "boolean" || typeof payload.distanceMiles !== "number") {
+        throw new Error("Unable to check delivery address.");
+      }
+
+      setDeliveryCheck({
+        eligible: payload.eligible,
+        distanceMiles: payload.distanceMiles,
+      });
+    } catch (err) {
+      setDeliveryCheck(null);
+      setDeliveryCheckError(
+        err instanceof Error ? err.message : "Unable to check delivery address.",
+      );
+    } finally {
+      setIsCheckingDelivery(false);
     }
   }
 
@@ -118,18 +198,75 @@ export default function CartPage() {
             <p className="text-sm font-medium mb-3 text-fh-muted">Fulfillment Method</p>
             <div className="toggle-track flex gap-3 mb-7 p-1.5 rounded-xl">
               <button
-                onClick={() => setFulfillment("pickup")}
+                onClick={() => {
+                  setFulfillment("pickup");
+                  setCheckoutError(null);
+                }}
                 className={`flex-1 py-2.5 font-semibold text-sm transition-all ${fulfillment === "pickup" ? "toggle-active" : "toggle-inactive"}`}
               >
                 Pickup
               </button>
               <button
-                onClick={() => setFulfillment("delivery")}
+                onClick={() => {
+                  setFulfillment("delivery");
+                  setCheckoutError(null);
+                }}
                 className={`flex-1 py-2.5 font-semibold text-sm transition-all ${fulfillment === "delivery" ? "toggle-active" : "toggle-inactive"}`}
               >
                 Delivery
               </button>
             </div>
+
+            {fulfillment === "delivery" ? (
+              <div className="mb-6">
+                <label className="text-sm font-medium block mb-2 text-fh-muted">
+                  Delivery Address *
+                </label>
+                <input
+                  value={deliveryAddress}
+                  onChange={(event) => {
+                    setDeliveryAddress(event.target.value);
+                    setDeliveryCheck(null);
+                    setDeliveryCheckError(null);
+                  }}
+                  onBlur={() => void handleDeliveryCheck()}
+                  maxLength={240}
+                  placeholder="Street address, city, state, ZIP"
+                  className="w-full rounded-xl px-3 py-2.5 text-sm input-soft"
+                />
+
+                <div className="mt-2 flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => void handleDeliveryCheck()}
+                    disabled={isCheckingDelivery || !deliveryAddress.trim()}
+                    className="btn-ghost py-2 px-3 text-xs disabled:opacity-60"
+                  >
+                    {isCheckingDelivery ? "Checking..." : "Check eligibility"}
+                  </button>
+                  <p className="text-xs text-fh-muted">
+                    Delivery available within 5 miles of 33185.
+                  </p>
+                </div>
+
+                {deliveryCheck ? (
+                  deliveryCheck.eligible ? (
+                    <p className="feedback-success text-xs mt-3 p-3 rounded-lg">
+                      Eligible for delivery (about {deliveryCheck.distanceMiles} miles away).
+                    </p>
+                  ) : (
+                    <p className="feedback-error text-xs mt-3 p-3 rounded-lg">
+                      Outside our delivery radius (about {deliveryCheck.distanceMiles} miles away).
+                      Please choose pickup.
+                    </p>
+                  )
+                ) : deliveryCheckError ? (
+                  <p className="feedback-error text-xs mt-3 p-3 rounded-lg">
+                    {deliveryCheckError}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
 
             <label className="text-sm font-medium block mb-2 text-fh-muted">
               Order Notes (optional)

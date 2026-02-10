@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import type { FulfillmentMethod } from "@/lib/types";
 import { getBaseUrl, getStripeClient } from "@/lib/stripe";
+import {
+  DELIVERY_MAX_DISTANCE_MILES,
+  DELIVERY_ORIGIN_ADDRESS,
+  getDeliveryEligibility,
+} from "@/lib/delivery";
 import prisma from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -15,6 +20,7 @@ type CheckoutRequestBody = {
   items: CheckoutItem[];
   fulfillment: FulfillmentMethod;
   notes?: string;
+  deliveryAddress?: string;
 };
 
 function isFulfillmentMethod(value: unknown): value is FulfillmentMethod {
@@ -49,7 +55,12 @@ function parseCheckoutRequest(value: unknown): CheckoutRequestBody | null {
     return null;
   }
 
-  const body = value as { items?: unknown; fulfillment?: unknown; notes?: unknown };
+  const body = value as {
+    items?: unknown;
+    fulfillment?: unknown;
+    notes?: unknown;
+    deliveryAddress?: unknown;
+  };
   if (!Array.isArray(body.items) || !isFulfillmentMethod(body.fulfillment)) {
     return null;
   }
@@ -70,10 +81,16 @@ function parseCheckoutRequest(value: unknown): CheckoutRequestBody | null {
       ? body.notes.trim().slice(0, 500)
       : undefined;
 
+  const deliveryAddress =
+    typeof body.deliveryAddress === "string" && body.deliveryAddress.trim()
+      ? body.deliveryAddress.trim().slice(0, 240)
+      : undefined;
+
   return {
     items: normalizedItems,
     fulfillment: body.fulfillment,
     notes,
+    deliveryAddress,
   };
 }
 
@@ -101,6 +118,33 @@ export async function POST(request: Request) {
   const baseUrl = getBaseUrl(request);
 
   try {
+    const deliveryAddress =
+      payload.fulfillment === "delivery"
+        ? (payload.deliveryAddress ?? "").trim()
+        : "";
+
+    if (payload.fulfillment === "delivery") {
+      if (!deliveryAddress) {
+        return NextResponse.json(
+          { error: "Delivery address is required for delivery orders." },
+          { status: 400 },
+        );
+      }
+
+      const eligibility = await getDeliveryEligibility(deliveryAddress);
+      if (!eligibility.ok) {
+        return NextResponse.json({ error: eligibility.error }, { status: 400 });
+      }
+      if (!eligibility.eligible) {
+        return NextResponse.json(
+          {
+            error: `Delivery is available within ${DELIVERY_MAX_DISTANCE_MILES} miles of ${DELIVERY_ORIGIN_ADDRESS}. Your address is about ${eligibility.distanceMiles} miles away.`,
+          },
+          { status: 400 },
+        );
+      }
+    }
+
     // Never trust cart prices coming from the client. Always look up the latest menu item
     // details from the database to prevent price tampering.
     const quantitiesByKey = new Map<string, number>();
@@ -239,6 +283,7 @@ export async function POST(request: Request) {
       metadata: {
         fulfillment: payload.fulfillment,
         items: JSON.stringify(normalizedStripeItems),
+        ...(deliveryAddress ? { deliveryAddress } : {}),
         ...(payload.notes ? { notes: payload.notes } : {}),
       },
       phone_number_collection: { enabled: true },
