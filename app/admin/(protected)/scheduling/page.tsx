@@ -1,30 +1,10 @@
-import prisma from "@/lib/prisma";
 import AdminSchedulingManager from "../../components/AdminSchedulingManager";
-import {
-  getDefaultScheduleConfig,
-  normalizeScheduleConfig,
-} from "@/lib/fulfillmentSchedule";
+import { getStoreSettingsSnapshot } from "@/lib/storeSettings";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminSchedulingPage() {
-  const defaults = getDefaultScheduleConfig();
-
-  const settings = await prisma.storeSettings.upsert({
-    where: { id: 1 },
-    create: { id: 1, fulfillmentSchedule: defaults },
-    update: {},
-    select: { fulfillmentSchedule: true },
-  });
-
-  const schedule = normalizeScheduleConfig(settings.fulfillmentSchedule);
-
-  if (!settings.fulfillmentSchedule) {
-    await prisma.storeSettings.update({
-      where: { id: 1 },
-      data: { fulfillmentSchedule: schedule },
-    });
-  }
+  const { schedule } = await getStoreSettingsSnapshot();
 
   return (
     <div className="space-y-5">
@@ -41,4 +21,3 @@ export default async function AdminSchedulingPage() {
     </div>
   );
 }
-

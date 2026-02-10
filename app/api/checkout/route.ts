@@ -7,14 +7,12 @@ import {
   getDeliveryEligibility,
 } from "@/lib/delivery";
 import {
-  getDefaultScheduleConfig,
   isSlotAvailable,
   isValidDateString,
   isValidTimeSlot,
-  normalizeScheduleConfig,
-  type FulfillmentScheduleConfig,
 } from "@/lib/fulfillmentSchedule";
 import prisma from "@/lib/prisma";
+import { getStoreSettingsSnapshot } from "@/lib/storeSettings";
 
 export const runtime = "nodejs";
 
@@ -143,26 +141,11 @@ export async function POST(request: Request) {
   const baseUrl = getBaseUrl(request);
 
   try {
-    const scheduleSettings = await prisma.storeSettings.upsert({
-      where: { id: 1 },
-      create: {
-        id: 1,
-        fulfillmentSchedule: getDefaultScheduleConfig(),
-      },
-      update: {},
-      select: {
-        stripeAccountId: true,
-        fulfillmentSchedule: true,
-      },
-    });
-
-    const schedule = normalizeScheduleConfig(
-      scheduleSettings.fulfillmentSchedule,
-    ) satisfies FulfillmentScheduleConfig;
+    const storeSettings = await getStoreSettingsSnapshot(prisma);
 
     if (
       !isSlotAvailable(
-        schedule,
+        storeSettings.schedule,
         payload.fulfillment,
         payload.scheduledDate,
         payload.scheduledTimeSlot,
@@ -303,11 +286,7 @@ export async function POST(request: Request) {
 
     const normalizedStripeItems = normalizedItems.filter((item): item is NonNullable<typeof item> => item !== null);
 
-    const connectedAccountId =
-      typeof scheduleSettings.stripeAccountId === "string" &&
-      scheduleSettings.stripeAccountId.trim()
-        ? scheduleSettings.stripeAccountId.trim()
-        : null;
+    const connectedAccountId = storeSettings.stripeAccountId;
 
     const session = await stripe.checkout.sessions.create({
       ui_mode: "embedded",

@@ -2,10 +2,10 @@ import { NextResponse, type NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/adminApi";
 import {
-  getDefaultScheduleConfig,
   normalizeScheduleConfig,
   type FulfillmentScheduleConfig,
 } from "@/lib/fulfillmentSchedule";
+import { getStoreSettingsSnapshot } from "@/lib/storeSettings";
 
 export const runtime = "nodejs";
 
@@ -29,24 +29,7 @@ export async function GET(request: NextRequest) {
     return auth.response;
   }
 
-  const defaults = getDefaultScheduleConfig();
-
-  const settings = await prisma.storeSettings.upsert({
-    where: { id: 1 },
-    create: { id: 1, fulfillmentSchedule: defaults },
-    update: {},
-    select: { fulfillmentSchedule: true },
-  });
-
-  const schedule = normalizeScheduleConfig(settings.fulfillmentSchedule);
-
-  if (!settings.fulfillmentSchedule) {
-    await prisma.storeSettings.update({
-      where: { id: 1 },
-      data: { fulfillmentSchedule: schedule },
-    });
-  }
-
+  const { schedule } = await getStoreSettingsSnapshot(prisma);
   return NextResponse.json({ schedule });
 }
 
@@ -105,4 +88,3 @@ export async function PATCH(request: NextRequest) {
     );
   }
 }
-
