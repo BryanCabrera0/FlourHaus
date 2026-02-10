@@ -27,6 +27,16 @@ type StripeStatusResponse = {
   }>;
 };
 
+type PaymentMethodDomainSummary = {
+  id: string;
+  domainName: string;
+  enabled: boolean;
+  createdAt: string;
+  applePay: { status: "active" | "inactive"; error?: string };
+  googlePay: { status: "active" | "inactive"; error?: string };
+  link: { status: "active" | "inactive"; error?: string };
+};
+
 type ActionState = "connect" | "login" | null;
 
 function formatMoney(amount: number, currency: string): string {
@@ -86,6 +96,12 @@ export default function AdminStripePanel() {
   const [error, setError] = useState<string | null>(null);
   const [action, setAction] = useState<ActionState>(null);
 
+  const [walletDomains, setWalletDomains] = useState<PaymentMethodDomainSummary[]>([]);
+  const [walletDomainInput, setWalletDomainInput] = useState("");
+  const [walletBusy, setWalletBusy] = useState(false);
+  const [walletError, setWalletError] = useState<string | null>(null);
+  const [walletSuccess, setWalletSuccess] = useState<string | null>(null);
+
   const loadStatus = useCallback(async () => {
     setError(null);
     setIsLoading(true);
@@ -123,6 +139,33 @@ export default function AdminStripePanel() {
     void loadStatus();
   }, [loadStatus]);
 
+  const loadWalletDomains = useCallback(async () => {
+    setWalletError(null);
+    try {
+      const response = await fetch("/api/admin/stripe/payment-method-domains", {
+        method: "GET",
+        cache: "no-store",
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | { domains?: PaymentMethodDomainSummary[]; error?: string }
+        | null;
+
+      if (!response.ok || !payload?.domains) {
+        throw new Error(payload?.error ?? "Unable to load wallet domain status.");
+      }
+
+      setWalletDomains(payload.domains);
+    } catch (err) {
+      setWalletDomains([]);
+      setWalletError(err instanceof Error ? err.message : "Unable to load wallet domain status.");
+    }
+  }, []);
+
+  useEffect(() => {
+    setWalletDomainInput(window.location.hostname);
+    void loadWalletDomains();
+  }, [loadWalletDomains]);
+
   const onboardingButtonLabel = useMemo(() => {
     if (!status?.account.linked) {
       return "Link Stripe Account";
@@ -138,6 +181,78 @@ export default function AdminStripePanel() {
 
     return "Complete Setup";
   }, [status]);
+
+  const walletDomain = useMemo(() => {
+    const hostname = walletDomainInput.trim().toLowerCase();
+    if (!hostname) return null;
+    return walletDomains.find((domain) => domain.domainName === hostname) ?? null;
+  }, [walletDomainInput, walletDomains]);
+
+  async function handleRegisterWalletDomain() {
+    if (walletBusy) return;
+
+    const domainName = walletDomainInput.trim();
+    if (!domainName) {
+      setWalletError("Enter a domain name first.");
+      return;
+    }
+
+    setWalletBusy(true);
+    setWalletError(null);
+    setWalletSuccess(null);
+
+    try {
+      const response = await fetch("/api/admin/stripe/payment-method-domains", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ domainName }),
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | { domain?: PaymentMethodDomainSummary; error?: string }
+        | null;
+
+      if (!response.ok || !payload?.domain) {
+        throw new Error(payload?.error ?? "Unable to register domain.");
+      }
+
+      setWalletSuccess("Domain registered. Refreshing status...");
+      await loadWalletDomains();
+      setWalletSuccess("Wallet domain updated.");
+    } catch (err) {
+      setWalletError(err instanceof Error ? err.message : "Unable to register domain.");
+    } finally {
+      setWalletBusy(false);
+    }
+  }
+
+  async function handleValidateWalletDomain(domainId: string) {
+    if (walletBusy) return;
+    setWalletBusy(true);
+    setWalletError(null);
+    setWalletSuccess(null);
+
+    try {
+      const response = await fetch(`/api/admin/stripe/payment-method-domains/${domainId}/validate`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | { domain?: PaymentMethodDomainSummary; error?: string }
+        | null;
+
+      if (!response.ok || !payload?.domain) {
+        throw new Error(payload?.error ?? "Unable to validate domain.");
+      }
+
+      setWalletSuccess("Domain validated. Refreshing status...");
+      await loadWalletDomains();
+      setWalletSuccess("Wallet domain status refreshed.");
+    } catch (err) {
+      setWalletError(err instanceof Error ? err.message : "Unable to validate domain.");
+    } finally {
+      setWalletBusy(false);
+    }
+  }
 
   async function handleConnect() {
     if (action) {
@@ -285,6 +400,99 @@ export default function AdminStripePanel() {
                 </div>
               </div>
             )}
+          </div>
+
+          <div className="card p-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div className="space-y-1">
+                <h3 className="font-semibold text-fh-heading">Wallets (Apple Pay)</h3>
+                <p className="text-sm text-fh-muted">
+                  Apple Pay appears automatically in embedded checkout once your domain is registered with Stripe.
+                </p>
+                <p className="text-xs text-fh-muted">
+                  Note: Embedded checkout wallet rendering requires Safari/iOS 17+ and Apple Pay set up in the customer&apos;s Wallet.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => void loadWalletDomains()}
+                disabled={walletBusy}
+                className="btn-admin-nav py-2 px-4 text-xs disabled:opacity-50 w-fit"
+              >
+                Refresh wallet status
+              </button>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+              <div className="md:col-span-2">
+                <label className="admin-label">Domain name</label>
+                <input
+                  value={walletDomainInput}
+                  onChange={(e) => setWalletDomainInput(e.target.value)}
+                  className="admin-input"
+                  placeholder="flourhaus.vercel.app"
+                  disabled={walletBusy}
+                />
+                <p className="text-[11px] mt-2 text-fh-muted">
+                  Use your live domain (no http/https, no path). Example: <code className="code-chip px-1">flourhaus.vercel.app</code>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => void handleRegisterWalletDomain()}
+                disabled={walletBusy || !walletDomainInput.trim()}
+                className="btn-primary py-3 px-4 text-xs disabled:opacity-50"
+              >
+                {walletBusy ? "Working..." : walletDomain ? "Update domain" : "Register domain"}
+              </button>
+            </div>
+
+            {walletError ? (
+              <p className="feedback-error text-sm mt-4 p-3 rounded-lg">{walletError}</p>
+            ) : null}
+            {walletSuccess ? (
+              <p className="feedback-success text-sm mt-4 p-3 rounded-lg">{walletSuccess}</p>
+            ) : null}
+
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="surface-soft p-4">
+                <p className="kicker kicker-accent mb-2">Apple Pay</p>
+                <p className="text-sm font-semibold text-fh-heading">
+                  {walletDomain ? walletDomain.applePay.status : "not registered"}
+                </p>
+                {walletDomain?.applePay.error ? (
+                  <p className="text-xs text-fh-muted mt-2">{walletDomain.applePay.error}</p>
+                ) : null}
+                {walletDomain && walletDomain.applePay.status !== "active" ? (
+                  <button
+                    type="button"
+                    onClick={() => void handleValidateWalletDomain(walletDomain.id)}
+                    disabled={walletBusy}
+                    className="btn-admin-nav mt-3 py-2 px-3 text-xs disabled:opacity-50"
+                  >
+                    Validate
+                  </button>
+                ) : null}
+              </div>
+              <div className="surface-soft p-4">
+                <p className="kicker kicker-blue mb-2">Google Pay</p>
+                <p className="text-sm font-semibold text-fh-heading">
+                  {walletDomain ? walletDomain.googlePay.status : "not registered"}
+                </p>
+                {walletDomain?.googlePay.error ? (
+                  <p className="text-xs text-fh-muted mt-2">{walletDomain.googlePay.error}</p>
+                ) : null}
+              </div>
+              <div className="surface-soft p-4">
+                <p className="kicker kicker-success mb-2">Link</p>
+                <p className="text-sm font-semibold text-fh-heading">
+                  {walletDomain ? walletDomain.link.status : "not registered"}
+                </p>
+                {walletDomain?.link.error ? (
+                  <p className="text-xs text-fh-muted mt-2">{walletDomain.link.error}</p>
+                ) : null}
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
