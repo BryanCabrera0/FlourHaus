@@ -7,6 +7,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { EmbeddedCheckout, EmbeddedCheckoutProvider } from "@stripe/react-stripe-js";
 import { formatCurrency } from "@/lib/format";
 import type { FulfillmentMethod } from "@/lib/types";
+import AddressAutocomplete from "@/app/components/AddressAutocomplete";
 import {
   addDays,
   formatTimeSlotLabel,
@@ -127,8 +128,8 @@ export default function CustomOrderPayClient({
     }
   }, [minDate, scheduledDate]);
 
-  async function handleDeliveryCheck() {
-    const address = deliveryAddress.trim();
+  async function handleDeliveryCheck(addressOverride?: string) {
+    const address = (addressOverride ?? deliveryAddress).trim();
     if (!address || isCheckingDelivery) {
       return;
     }
@@ -323,13 +324,16 @@ export default function CustomOrderPayClient({
           <label className="text-sm font-medium block mb-2 text-fh-muted">
             Address *
           </label>
-          <input
+          <AddressAutocomplete
             value={deliveryAddress}
-            onChange={(event) => {
-              setDeliveryAddress(event.target.value);
+            onChange={(next) => {
+              setDeliveryAddress(next);
               setDeliveryCheck(null);
               setDeliveryCheckError(null);
               setPaymentError(null);
+            }}
+            onSelect={(selected) => {
+              void handleDeliveryCheck(selected);
             }}
             onBlur={() => void handleDeliveryCheck()}
             maxLength={240}

@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { formatCurrency } from "@/lib/format";
 import type { FulfillmentMethod } from "@/lib/types";
 import { writeCheckoutClientSecret } from "@/lib/checkoutClientSecret";
+import AddressAutocomplete from "../components/AddressAutocomplete";
 import {
   addDays,
   formatTimeSlotLabel,
@@ -214,8 +215,8 @@ export default function CartPage() {
     }
   }
 
-  async function handleDeliveryCheck() {
-    const address = deliveryAddress.trim();
+  async function handleDeliveryCheck(addressOverride?: string) {
+    const address = (addressOverride ?? deliveryAddress).trim();
     if (!address || isCheckingDelivery) {
       return;
     }
@@ -344,17 +345,22 @@ export default function CartPage() {
                 <label className="text-sm font-medium block mb-2 text-fh-muted">
                   Delivery Address *
                 </label>
-                <input
+                <AddressAutocomplete
                   value={deliveryAddress}
-                  onChange={(event) => {
-                    setDeliveryAddress(event.target.value);
+                  onChange={(next) => {
+                    setDeliveryAddress(next);
                     setDeliveryCheck(null);
                     setDeliveryCheckError(null);
+                  }}
+                  onSelect={(selected) => {
+                    void handleDeliveryCheck(selected);
                   }}
                   onBlur={() => void handleDeliveryCheck()}
                   maxLength={240}
                   placeholder="Street address, city, state, ZIP"
                   className="w-full rounded-xl px-3 py-2.5 text-sm input-soft"
+                  disabled={isCheckingOut}
+                  required
                 />
 
                 <div className="mt-2 flex items-center gap-2 flex-wrap">

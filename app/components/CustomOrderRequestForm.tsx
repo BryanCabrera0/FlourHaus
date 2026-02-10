@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, type FormEvent } from "react";
+import AddressAutocomplete from "./AddressAutocomplete";
 
 type FormState = {
   name: string;
@@ -158,9 +159,9 @@ export default function CustomOrderRequestForm() {
           <label className="text-sm font-semibold mb-1 block text-fh-body">
             Delivery Address *
           </label>
-          <input
+          <AddressAutocomplete
             value={form.deliveryAddress}
-            onChange={(event) => updateField("deliveryAddress", event.target.value)}
+            onChange={(next) => updateField("deliveryAddress", next)}
             maxLength={240}
             className="w-full rounded-xl px-3 py-2.5 text-sm input-soft"
             placeholder="Street address, city, state, ZIP"
