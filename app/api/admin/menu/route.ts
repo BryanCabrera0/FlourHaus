@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/adminApi";
+import { enforceMenuItemVariantRules } from "@/lib/menuItemVariantRules";
 
 export const runtime = "nodejs";
 
@@ -119,6 +120,12 @@ export async function POST(request: NextRequest) {
         },
       });
 
+      await enforceMenuItemVariantRules(tx, {
+        menuItemId: menuItem.id,
+        category: menuItem.category,
+        basePrice: menuItem.price,
+      });
+
       await tx.adminAuditLog.create({
         data: {
           action: "menu.create",
@@ -135,7 +142,20 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      return menuItem;
+      const refreshed = await tx.menuItem.findUnique({
+        where: { id: menuItem.id },
+        include: {
+          variants: {
+            orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+          },
+        },
+      });
+
+      if (!refreshed) {
+        throw new Error("Menu item not found after create.");
+      }
+
+      return refreshed;
     });
 
     return NextResponse.json({ menuItem: created }, { status: 201 });

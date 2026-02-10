@@ -14,14 +14,13 @@ export default function MenuItemCard({ item }: MenuItemCardProps) {
   const variants = item.variants ?? [];
   const hasVariants = variants.length > 0;
 
-  const [selectedVariantId, setSelectedVariantId] = useState<number | null>(
-    null
-  );
+  const [selectedVariantId, setSelectedVariantId] = useState<number | null>(() => {
+    return variants[0]?.id ?? null;
+  });
 
-  const selectedVariant =
-    hasVariants && selectedVariantId !== null
-      ? variants.find((variant) => variant.id === selectedVariantId) ?? variants[0]
-      : null;
+  const selectedVariant = hasVariants
+    ? variants.find((variant) => variant.id === selectedVariantId) ?? variants[0]
+    : null;
 
   const displayPrice = selectedVariant?.price ?? item.price;
   const variantLabel = selectedVariant?.label ?? null;
@@ -52,13 +51,6 @@ export default function MenuItemCard({ item }: MenuItemCardProps) {
         <div className="mt-4">
           <p className="text-xs font-semibold text-fh-muted mb-2">Select Quantity</p>
           <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setSelectedVariantId(null)}
-              className={selectedVariantId === null ? "variant-chip-active" : "variant-chip"}
-            >
-              Single
-            </button>
             {variants.map((variant) => (
               <button
                 key={variant.id}

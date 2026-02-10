@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/adminApi";
+import { enforceMenuItemVariantRules } from "@/lib/menuItemVariantRules";
 
 export const runtime = "nodejs";
 
@@ -174,6 +175,12 @@ export async function PATCH(
         },
       });
 
+      await enforceMenuItemVariantRules(tx, {
+        menuItemId: menuItem.id,
+        category: menuItem.category,
+        basePrice: menuItem.price,
+      });
+
       await tx.adminAuditLog.create({
         data: {
           action: "menu.update",
@@ -195,7 +202,16 @@ export async function PATCH(
         },
       });
 
-      return menuItem;
+      const refreshed = await tx.menuItem.findUnique({
+        where: { id },
+        include: {
+          variants: {
+            orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+          },
+        },
+      });
+
+      return refreshed;
     });
 
     if (!updated) {

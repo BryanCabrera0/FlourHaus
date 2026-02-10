@@ -1,9 +1,12 @@
 import prisma from "@/lib/prisma";
+import { ensureCookieVariantsForActiveMenuItems } from "@/lib/menuItemVariantRules";
 import AdminMenuManager from "../../components/AdminMenuManager";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminMenuPage() {
+  await ensureCookieVariantsForActiveMenuItems(prisma);
+
   const menuItems = await prisma.menuItem.findMany({
     orderBy: [{ sortOrder: "asc" }, { category: "asc" }, { id: "asc" }],
     include: {

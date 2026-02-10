@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma/client";
+import { ensureCookieVariantsForActiveMenuItems } from "@/lib/menuItemVariantRules";
 import MenuItemCard from "../components/MenuItemCard";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +27,8 @@ const MENU_PAGE_SELECT: Prisma.MenuItemSelect = {
 };
 
 export default async function MenuPage() {
+  await ensureCookieVariantsForActiveMenuItems(prisma);
+
   const menuItems = await prisma.menuItem.findMany({
     select: MENU_PAGE_SELECT,
     where: { isActive: true },

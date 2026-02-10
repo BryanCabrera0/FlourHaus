@@ -13,6 +13,7 @@ import {
 } from "@/lib/fulfillmentSchedule";
 import prisma from "@/lib/prisma";
 import { getStoreSettingsSnapshot } from "@/lib/storeSettings";
+import { isCookieCategory } from "@/lib/menuItemVariantRules";
 
 export const runtime = "nodejs";
 
@@ -211,7 +212,7 @@ export async function POST(request: Request) {
     const [menuItems, variants] = await Promise.all([
       prisma.menuItem.findMany({
         where: { id: { in: orderedMenuItemIds }, isActive: true },
-        select: { id: true, name: true, price: true },
+        select: { id: true, name: true, price: true, category: true },
       }),
       orderedVariantIds.length > 0
         ? prisma.menuItemVariant.findMany({
@@ -251,6 +252,9 @@ export async function POST(request: Request) {
       if (!variantId) {
         const menuItem = menuById.get(menuItemId);
         if (!menuItem) {
+          return null;
+        }
+        if (isCookieCategory(menuItem.category)) {
           return null;
         }
         return {

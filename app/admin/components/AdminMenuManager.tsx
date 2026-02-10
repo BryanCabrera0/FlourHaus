@@ -4,7 +4,6 @@ import { useCallback, useMemo, useState } from "react";
 import { formatCurrency } from "@/lib/format";
 import type { AdminMenuItemVariant } from "@/lib/types";
 import ImageUploadField from "./ImageUploadField";
-import MenuItemVariantsEditor from "./MenuItemVariantsEditor";
 
 type AdminMenuItem = {
   id: number;
@@ -572,6 +571,11 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
       ? items.find((entry) => entry.id === editingItemId) ?? null
       : null;
 
+  const isCookieDraft = useMemo(() => {
+    const normalized = editorDraft.category.trim().toLowerCase();
+    return normalized === "cookies" || normalized === "cookie";
+  }, [editorDraft.category]);
+
   return (
     <div className="space-y-6">
       {error ? (
@@ -903,6 +907,11 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                     inputMode="decimal"
                     placeholder="4.99"
                   />
+                  {isCookieDraft ? (
+                    <p className="text-xs mt-1 text-fh-muted">
+                      Cookie items are sold only in packs of 4 / 8 / 12. The price above is per cookie.
+                    </p>
+                  ) : null}
                 </div>
                 <div className="flex items-end gap-4">
                   <label className="text-sm flex items-center gap-2 text-fh-muted">
@@ -978,39 +987,6 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                       Used only when featured.
                     </p>
                   </div>
-                </div>
-              </details>
-
-              <details className="surface-soft p-4" open={false}>
-                <summary className="cursor-pointer font-semibold text-fh-heading">
-                  Variants (optional)
-                </summary>
-                <div className="mt-4">
-                  {editorMode === "create" ? (
-                    <p className="text-sm text-fh-muted">
-                      Save this item first, then come back to add variants (like cookie packs).
-                    </p>
-                  ) : editingItem ? (
-                    <MenuItemVariantsEditor
-                      menuItemId={editingItem.id}
-                      basePrice={parsePrice(editorDraft.price) ?? editingItem.price}
-                      variants={editingItem.variants}
-                      disabled={editorBusy}
-                      onVariantsChange={(nextVariants) => {
-                        setItems((prev) =>
-                          sortItems(
-                            prev.map((entry) =>
-                              entry.id === editingItem.id
-                                ? { ...entry, variants: nextVariants }
-                                : entry,
-                            ),
-                          ),
-                        );
-                      }}
-                    />
-                  ) : (
-                    <p className="text-sm text-fh-muted">Unable to load variants.</p>
-                  )}
                 </div>
               </details>
 

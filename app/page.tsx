@@ -1,6 +1,7 @@
 import Link from "next/link";
 import prisma from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma/client";
+import { ensureCookieVariantsForActiveMenuItems } from "@/lib/menuItemVariantRules";
 import MenuItemCard from "./components/MenuItemCard";
 import CustomOrderRequestForm from "./components/CustomOrderRequestForm";
 
@@ -25,6 +26,8 @@ const MENU_ITEM_CARD_SELECT: Prisma.MenuItemSelect = {
 };
 
 export default async function HomePage() {
+  await ensureCookieVariantsForActiveMenuItems(prisma);
+
   const featuredItems = await prisma.menuItem.findMany({
     select: MENU_ITEM_CARD_SELECT,
     where: { isActive: true, isFeatured: true },
