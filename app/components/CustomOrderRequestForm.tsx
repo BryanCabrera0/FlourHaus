@@ -45,6 +45,11 @@ export default function CustomOrderRequestForm() {
       return;
     }
 
+    if (!form.fulfillmentPreference) {
+      setError("Please choose a fulfillment method (pickup or delivery).");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const response = await fetch("/api/custom-orders", {
@@ -123,15 +128,18 @@ export default function CustomOrderRequestForm() {
           />
         </div>
         <div>
-          <label className="text-sm font-semibold mb-1 block text-fh-body">Fulfillment (optional)</label>
+          <label className="text-sm font-semibold mb-1 block text-fh-body">Fulfillment *</label>
           <select
             value={form.fulfillmentPreference}
             onChange={(event) =>
               updateField("fulfillmentPreference", event.target.value as FormState["fulfillmentPreference"])
             }
             className="w-full rounded-xl px-3 py-2.5 text-sm input-soft"
+            required
           >
-            <option value="">No preference</option>
+            <option value="" disabled>
+              Choose pickup or delivery
+            </option>
             <option value="pickup">Pickup</option>
             <option value="delivery">Delivery</option>
           </select>
@@ -190,4 +198,3 @@ export default function CustomOrderRequestForm() {
     </form>
   );
 }
-

@@ -23,7 +23,7 @@ type ParsedBody = {
   desiredItems: string;
   requestDetails: string;
   requestedDate: Date | null;
-  fulfillmentPreference: FulfillmentMethod | null;
+  fulfillmentPreference: FulfillmentMethod;
   budget: string | null;
 };
 
@@ -76,19 +76,14 @@ function parseOptionalRequestedDate(value: unknown): Date | null | undefined {
   return parsed;
 }
 
-function parseOptionalFulfillment(
-  value: unknown
-): FulfillmentMethod | null | undefined {
-  if (value === undefined || value === null) {
-    return null;
-  }
+function parseRequiredFulfillment(value: unknown): FulfillmentMethod | undefined {
   if (typeof value !== "string") {
     return undefined;
   }
 
   const normalized = value.trim().toLowerCase();
   if (!normalized) {
-    return null;
+    return undefined;
   }
 
   return FULFILLMENT_METHODS.includes(normalized as FulfillmentMethod)
@@ -118,7 +113,7 @@ function parseBody(body: CreateCustomOrderBody | null): ParsedBody | null {
   const customerPhone = parseOptionalText(body?.phone, 40);
   const budget = parseOptionalText(body?.budget, 120);
   const requestedDate = parseOptionalRequestedDate(body?.requestedDate);
-  const fulfillmentPreference = parseOptionalFulfillment(body?.fulfillmentPreference);
+  const fulfillmentPreference = parseRequiredFulfillment(body?.fulfillmentPreference);
 
   if (
     customerPhone === undefined ||
@@ -151,7 +146,7 @@ function formatOwnerNotificationText(payload: ParsedBody & { id: number }) {
     `Phone: ${payload.customerPhone ?? "Not provided"}`,
     `Desired Items: ${payload.desiredItems}`,
     `Requested Date: ${payload.requestedDate ? payload.requestedDate.toISOString().slice(0, 10) : "Not specified"}`,
-    `Fulfillment: ${payload.fulfillmentPreference ?? "Not specified"}`,
+    `Fulfillment: ${payload.fulfillmentPreference}`,
     `Budget: ${payload.budget ?? "Not specified"}`,
     "",
     "Customer Notes:",
@@ -167,7 +162,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "Invalid request. Include name, email, requested item summary, and request details.",
+          "Invalid request. Include name, email, fulfillment method, requested item summary, and request details.",
       },
       { status: 400 }
     );
