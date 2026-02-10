@@ -641,6 +641,40 @@
   text-transform: capitalize;
 }
 
+/* ── Variant chip (menu presets) ───────────── */
+.variant-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1.5px solid var(--fh-border-strong);
+  color: var(--fh-heading);
+  background: rgba(255, 255, 255, 0.68);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.variant-chip:hover {
+  background: rgba(224, 215, 255, 0.4);
+  border-color: rgba(45, 40, 80, 0.18);
+}
+.variant-chip-active {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(107, 91, 149, 0.34);
+  color: var(--fh-heading);
+  background: rgba(224, 215, 255, 0.82);
+  box-shadow: 0 6px 14px rgba(70, 58, 85, 0.12);
+  cursor: pointer;
+}
+
 /* ── Notes callout ───────────────────────── */
 .notes-callout {
   background: rgba(204, 241, 255, 0.4);

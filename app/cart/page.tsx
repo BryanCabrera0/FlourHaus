@@ -34,10 +34,16 @@ export default function CartPage() {
     setIsCheckingOut(true);
 
     try {
+      const checkoutItems = items.map((item) => ({
+        menuItemId: item.menuItemId,
+        variantId: item.variantId,
+        quantity: item.quantity,
+      }));
+
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items, fulfillment, notes: orderNotes }),
+        body: JSON.stringify({ items: checkoutItems, fulfillment, notes: orderNotes }),
       });
 
       const data: unknown = await response.json();
@@ -69,18 +75,26 @@ export default function CartPage() {
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
             {items.map((item) => (
-              <div key={item.id} className="card p-5 flex justify-between items-center">
+              <div key={item.lineId} className="card p-5 flex justify-between items-center">
                 <div>
-                  <h3 className="font-semibold text-fh-heading">{item.name}</h3>
+                  <h3 className="font-semibold text-fh-heading">
+                    {item.name}
+                    {item.variantLabel ? (
+                      <span className="text-fh-muted font-semibold">
+                        {" "}
+                        ({item.variantLabel})
+                      </span>
+                    ) : null}
+                  </h3>
                   <p className="text-sm mt-1 text-fh-muted">
-                    Qty: {item.quantity} &times; {formatCurrency(item.price)}
+                    Qty: {item.quantity} &times; {formatCurrency(item.unitPrice)}
                   </p>
                 </div>
                 <div className="flex items-center gap-4">
                   <span className="font-bold text-fh-success">
-                    {formatCurrency(item.price * item.quantity)}
+                    {formatCurrency(item.unitPrice * item.quantity)}
                   </span>
-                  <button onClick={() => removeFromCart(item.id)} className="btn-remove text-sm">
+                  <button onClick={() => removeFromCart(item.lineId)} className="btn-remove text-sm">
                     Remove
                   </button>
                 </div>

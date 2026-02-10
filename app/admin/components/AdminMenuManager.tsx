@@ -2,6 +2,8 @@
 
 import { useCallback, useMemo, useRef, useState } from "react";
 import { formatCurrency } from "@/lib/format";
+import type { AdminMenuItemVariant } from "@/lib/types";
+import MenuItemVariantsEditor from "./MenuItemVariantsEditor";
 
 type AdminMenuItem = {
   id: number;
@@ -14,6 +16,7 @@ type AdminMenuItem = {
   sortOrder: number;
   isFeatured: boolean;
   featuredSortOrder: number;
+  variants: AdminMenuItemVariant[];
   createdAt: string;
   updatedAt: string;
 };
@@ -1385,6 +1388,25 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                                       }
                                       className="admin-input resize-y"
                                       rows={3}
+                                    />
+                                  </div>
+                                  <div className="md:col-span-2">
+                                    <MenuItemVariantsEditor
+                                      menuItemId={item.id}
+                                      basePrice={item.price}
+                                      variants={item.variants}
+                                      disabled={busy}
+                                      onVariantsChange={(nextVariants) => {
+                                        setItems((prev) =>
+                                          sortItems(
+                                            prev.map((entry) =>
+                                              entry.id === item.id
+                                                ? { ...entry, variants: nextVariants }
+                                                : entry,
+                                            ),
+                                          ),
+                                        );
+                                      }}
                                     />
                                   </div>
                                 </div>

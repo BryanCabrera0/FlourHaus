@@ -43,6 +43,22 @@ model MenuItem {
   featuredSortOrder Int @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now()) @updatedAt
+  variants    MenuItemVariant[]
+}
+
+model MenuItemVariant {
+  id        Int      @id @default(autoincrement())
+  menuItemId Int
+  menuItem  MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  label     String
+  unitCount Int      @default(1)
+  price     Float
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([menuItemId, sortOrder])
 }
 
 model Order {

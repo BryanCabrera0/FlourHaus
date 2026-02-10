@@ -16,34 +16,46 @@ type CartState = {
 
 type CartActions = {
   addToCart: (item: CartItemInput) => void;
-  removeFromCart: (id: number) => void;
+  removeFromCart: (lineId: string) => void;
   clearCart: () => void;
 };
 
 type CartAction =
   | { type: "add"; item: CartItemInput }
-  | { type: "remove"; id: number }
+  | { type: "remove"; lineId: string }
   | { type: "clear" };
 
 const CartStateContext = createContext<CartState | null>(null);
 const CartActionsContext = createContext<CartActions | null>(null);
 
+function toLineId(item: CartItemInput): string {
+  return `${item.menuItemId}:${item.variantId ?? "base"}`;
+}
+
 function cartReducer(items: CartItem[], action: CartAction): CartItem[] {
   switch (action.type) {
     case "add": {
-      const existing = items.find((item) => item.id === action.item.id);
+      const lineId = toLineId(action.item);
+      const existing = items.find((item) => item.lineId === lineId);
       if (existing) {
         return items.map((item) =>
-          item.id === action.item.id
+          item.lineId === lineId
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       }
 
-      return [...items, { ...action.item, quantity: 1 }];
+      return [
+        ...items,
+        {
+          lineId,
+          ...action.item,
+          quantity: 1,
+        },
+      ];
     }
     case "remove":
-      return items.filter((item) => item.id !== action.id);
+      return items.filter((item) => item.lineId !== action.lineId);
     case "clear":
       return [];
     default:
@@ -54,7 +66,7 @@ function cartReducer(items: CartItem[], action: CartAction): CartItem[] {
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, dispatch] = useReducer(cartReducer, []);
   const total = useMemo(
-    () => items.reduce((sum, item) => sum + item.price * item.quantity, 0),
+    () => items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
     [items]
   );
 
@@ -62,8 +74,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: "add", item });
   }, []);
 
-  const removeFromCart = useCallback((id: number) => {
-    dispatch({ type: "remove", id });
+  const removeFromCart = useCallback((lineId: string) => {
+    dispatch({ type: "remove", lineId });
   }, []);
 
   const clearCart = useCallback(() => {

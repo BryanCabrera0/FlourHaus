@@ -167,6 +167,11 @@ export async function PATCH(
       const menuItem = await tx.menuItem.update({
         where: { id },
         data: updateData,
+        include: {
+          variants: {
+            orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+          },
+        },
       });
 
       await tx.adminAuditLog.create({

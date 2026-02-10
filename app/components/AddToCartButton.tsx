@@ -7,14 +7,16 @@ import type { CartItemInput } from "@/lib/types";
 type AddToCartButtonProps = CartItemInput;
 
 function AddToCartButton({
-  id,
+  menuItemId,
+  variantId,
   name,
-  price,
+  variantLabel,
+  unitPrice,
 }: AddToCartButtonProps) {
   const { addToCart } = useCartActions();
   const handleAddToCart = useCallback(() => {
-    addToCart({ id, name, price });
-  }, [addToCart, id, name, price]);
+    addToCart({ menuItemId, variantId, name, variantLabel, unitPrice });
+  }, [addToCart, menuItemId, name, unitPrice, variantId, variantLabel]);
 
   return (
     <button

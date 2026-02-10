@@ -13,6 +13,16 @@ export default async function HomePage() {
       description: true,
       price: true,
       imageUrl: true,
+      variants: {
+        where: { isActive: true },
+        orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+        select: {
+          id: true,
+          label: true,
+          unitCount: true,
+          price: true,
+        },
+      },
     },
     where: { isActive: true, isFeatured: true },
     orderBy: [
@@ -33,6 +43,16 @@ export default async function HomePage() {
             description: true,
             price: true,
             imageUrl: true,
+            variants: {
+              where: { isActive: true },
+              orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+              select: {
+                id: true,
+                label: true,
+                unitCount: true,
+                price: true,
+              },
+            },
           },
           where: { isActive: true },
           orderBy: [{ sortOrder: "asc" }, { id: "asc" }],

@@ -12,6 +12,16 @@ export default async function MenuPage() {
       price: true,
       category: true,
       imageUrl: true,
+      variants: {
+        where: { isActive: true },
+        orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+        select: {
+          id: true,
+          label: true,
+          unitCount: true,
+          price: true,
+        },
+      },
     },
     where: { isActive: true },
     orderBy: [{ sortOrder: "asc" }, { category: "asc" }, { id: "asc" }],

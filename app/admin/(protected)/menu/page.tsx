@@ -6,6 +6,11 @@ export const dynamic = "force-dynamic";
 export default async function AdminMenuPage() {
   const menuItems = await prisma.menuItem.findMany({
     orderBy: [{ sortOrder: "asc" }, { category: "asc" }, { id: "asc" }],
+    include: {
+      variants: {
+        orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+      },
+    },
   });
 
   return (
@@ -23,6 +28,11 @@ export default async function AdminMenuPage() {
           ...item,
           createdAt: item.createdAt.toISOString(),
           updatedAt: item.updatedAt.toISOString(),
+          variants: item.variants.map((variant) => ({
+            ...variant,
+            createdAt: variant.createdAt.toISOString(),
+            updatedAt: variant.updatedAt.toISOString(),
+          })),
         }))}
       />
     </div>

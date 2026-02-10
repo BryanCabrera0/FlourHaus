@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
-import type { CartItem, FulfillmentMethod } from "@/lib/types";
+import type { FulfillmentMethod } from "@/lib/types";
 import { getBaseUrl, getStripeClient } from "@/lib/stripe";
 import prisma from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
+type CheckoutItem = {
+  menuItemId: number;
+  variantId: number | null;
+  quantity: number;
+};
+
 type CheckoutRequestBody = {
-  items: Array<Pick<CartItem, "id" | "quantity">>;
+  items: CheckoutItem[];
   fulfillment: FulfillmentMethod;
   notes?: string;
 };
@@ -15,15 +21,23 @@ function isFulfillmentMethod(value: unknown): value is FulfillmentMethod {
   return value === "pickup" || value === "delivery";
 }
 
-function isCheckoutItem(value: unknown): value is Pick<CartItem, "id" | "quantity"> {
+function isCheckoutItem(value: unknown): value is CheckoutItem {
   if (typeof value !== "object" || value === null) {
     return false;
   }
 
   const item = value as Record<string, unknown>;
+  const variantIdRaw = "variantId" in item ? item.variantId : null;
+  const variantIdValid =
+    variantIdRaw === null ||
+    variantIdRaw === undefined ||
+    (typeof variantIdRaw === "number" && Number.isInteger(variantIdRaw) && variantIdRaw > 0);
+
   return (
-    typeof item.id === "number" &&
-    Number.isInteger(item.id) &&
+    typeof item.menuItemId === "number" &&
+    Number.isInteger(item.menuItemId) &&
+    item.menuItemId > 0 &&
+    variantIdValid &&
     typeof item.quantity === "number" &&
     Number.isInteger(item.quantity) &&
     item.quantity > 0
@@ -45,13 +59,19 @@ function parseCheckoutRequest(value: unknown): CheckoutRequestBody | null {
     return null;
   }
 
+  const normalizedItems = items.map((item) => ({
+    menuItemId: item.menuItemId,
+    variantId: item.variantId ?? null,
+    quantity: item.quantity,
+  }));
+
   const notes =
     typeof body.notes === "string" && body.notes.trim()
       ? body.notes.trim().slice(0, 500)
       : undefined;
 
   return {
-    items,
+    items: normalizedItems,
     fulfillment: body.fulfillment,
     notes,
   };
@@ -83,42 +103,105 @@ export async function POST(request: Request) {
   try {
     // Never trust cart prices coming from the client. Always look up the latest menu item
     // details from the database to prevent price tampering.
-    const quantitiesById = new Map<number, number>();
-    const orderedIds: number[] = [];
+    const quantitiesByKey = new Map<string, number>();
+    const orderedKeys: string[] = [];
+    const orderedMenuItemIds: number[] = [];
+    const orderedVariantIds: number[] = [];
+
     for (const item of payload.items) {
-      if (!quantitiesById.has(item.id)) {
-        orderedIds.push(item.id);
+      const key = `${item.menuItemId}:${item.variantId ?? "base"}`;
+      if (!quantitiesByKey.has(key)) {
+        orderedKeys.push(key);
       }
-      quantitiesById.set(item.id, (quantitiesById.get(item.id) ?? 0) + item.quantity);
+      quantitiesByKey.set(key, (quantitiesByKey.get(key) ?? 0) + item.quantity);
+
+      if (!orderedMenuItemIds.includes(item.menuItemId)) {
+        orderedMenuItemIds.push(item.menuItemId);
+      }
+      if (item.variantId !== null && !orderedVariantIds.includes(item.variantId)) {
+        orderedVariantIds.push(item.variantId);
+      }
     }
 
-    if (orderedIds.length === 0) {
+    if (orderedKeys.length === 0) {
       return NextResponse.json({ error: "Invalid checkout payload" }, { status: 400 });
     }
 
-    const menuItems = await prisma.menuItem.findMany({
-      where: { id: { in: orderedIds }, isActive: true },
-      select: { id: true, name: true, price: true },
-    });
+    const [menuItems, variants] = await Promise.all([
+      prisma.menuItem.findMany({
+        where: { id: { in: orderedMenuItemIds }, isActive: true },
+        select: { id: true, name: true, price: true },
+      }),
+      orderedVariantIds.length > 0
+        ? prisma.menuItemVariant.findMany({
+            where: {
+              id: { in: orderedVariantIds },
+              isActive: true,
+              menuItem: { isActive: true },
+            },
+            select: {
+              id: true,
+              menuItemId: true,
+              label: true,
+              price: true,
+              menuItem: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          })
+        : [],
+    ]);
 
     const menuById = new Map(menuItems.map((item) => [item.id, item]));
-    const unavailableIds = orderedIds.filter((id) => !menuById.has(id));
-    if (unavailableIds.length > 0) {
+    const variantsById = new Map(variants.map((variant) => [variant.id, variant]));
+
+    const normalizedItems = orderedKeys.map((key) => {
+      const [menuIdRaw, variantRaw] = key.split(":");
+      const menuItemId = Number.parseInt(menuIdRaw ?? "", 10);
+      const variantId = variantRaw === "base" ? null : Number.parseInt(variantRaw ?? "", 10);
+
+      const quantity = quantitiesByKey.get(key) ?? 0;
+      if (!Number.isInteger(menuItemId) || menuItemId <= 0 || quantity <= 0) {
+        return null;
+      }
+
+      if (!variantId) {
+        const menuItem = menuById.get(menuItemId);
+        if (!menuItem) {
+          return null;
+        }
+        return {
+          id: menuItem.id,
+          name: menuItem.name,
+          price: menuItem.price,
+          quantity,
+        };
+      }
+
+      const variant = variantsById.get(variantId);
+      if (!variant || variant.menuItemId !== menuItemId) {
+        return null;
+      }
+
+      return {
+        id: menuItemId,
+        name: `${variant.menuItem.name} (${variant.label})`,
+        price: variant.price,
+        quantity,
+      };
+    });
+
+    const invalidCount = normalizedItems.filter((item) => item === null).length;
+    if (invalidCount > 0) {
       return NextResponse.json(
-        { error: buildItemUnavailableMessage(unavailableIds.length) },
+        { error: buildItemUnavailableMessage(invalidCount) },
         { status: 400 },
       );
     }
 
-    const normalizedItems = orderedIds.map((id) => {
-      const menuItem = menuById.get(id)!;
-      return {
-        id: menuItem.id,
-        name: menuItem.name,
-        price: menuItem.price,
-        quantity: quantitiesById.get(id)!,
-      };
-    });
+    const normalizedStripeItems = normalizedItems.filter((item): item is NonNullable<typeof item> => item !== null);
 
     const settings = await prisma.storeSettings.upsert({
       where: { id: 1 },
@@ -134,7 +217,7 @@ export async function POST(request: Request) {
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
-      line_items: normalizedItems.map((item) => ({
+      line_items: normalizedStripeItems.map((item) => ({
         price_data: {
           currency: "usd",
           product_data: {
@@ -155,7 +238,7 @@ export async function POST(request: Request) {
         : {}),
       metadata: {
         fulfillment: payload.fulfillment,
-        items: JSON.stringify(normalizedItems),
+        items: JSON.stringify(normalizedStripeItems),
         ...(payload.notes ? { notes: payload.notes } : {}),
       },
       phone_number_collection: { enabled: true },

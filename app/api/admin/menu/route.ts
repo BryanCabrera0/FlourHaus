@@ -82,6 +82,11 @@ export async function GET(request: NextRequest) {
 
   const menuItems = await prisma.menuItem.findMany({
     orderBy: [{ sortOrder: "asc" }, { category: "asc" }, { id: "asc" }],
+    include: {
+      variants: {
+        orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+      },
+    },
   });
 
   return NextResponse.json({ menuItems });
@@ -107,6 +112,11 @@ export async function POST(request: NextRequest) {
     const created = await prisma.$transaction(async (tx) => {
       const menuItem = await tx.menuItem.create({
         data: parsedBody,
+        include: {
+          variants: {
+            orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+          },
+        },
       });
 
       await tx.adminAuditLog.create({
