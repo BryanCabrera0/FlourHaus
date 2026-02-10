@@ -10,7 +10,7 @@ export default function CartLink() {
   return (
     <Link
       href="/cart"
-      className="nav-link relative inline-flex items-center justify-center rounded-xl p-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(107,91,149,0.35)]"
+      className="nav-icon-btn relative inline-flex items-center justify-center"
       aria-label="Cart"
     >
       <span className="sr-only">Cart</span>

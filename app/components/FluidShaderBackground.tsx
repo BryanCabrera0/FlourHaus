@@ -74,7 +74,10 @@ const FRAG = /* glsl */ `
 
     float d = length(p - m * 0.65);
     float influence = exp(-d * 3.2);
-    warp += influence * 0.55 * vec2(sin(t * 2.0), cos(t * 1.7));
+    warp += influence * 0.55 * vec2(
+      sin(t * 2.0 + n1 * 6.0),
+      cos(t * 1.7 + n2 * 6.0)
+    );
 
     float n = fbm(p * 3.0 + warp * 1.35 + t);
 
@@ -97,6 +100,11 @@ const FRAG = /* glsl */ `
     // Subtle vignette to keep center readable.
     float vign = smoothstep(1.15, 0.25, length(p));
     col = mix(col, vec3(1.0), (1.0 - vign) * 0.10);
+
+    // Porcelain glaze highlight: adds a gentle moving sheen without high-frequency noise.
+    float glaze = smoothstep(0.58, 0.95, n) * 0.06;
+    glaze *= vign;
+    col = mix(col, vec3(1.0), glaze);
 
     // Keep it soft/pastel: slight desaturation towards white.
     col = mix(col, vec3(1.0), 0.18);
