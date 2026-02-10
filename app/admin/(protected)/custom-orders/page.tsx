@@ -4,6 +4,7 @@ import {
   CUSTOM_ORDER_REQUEST_STATUSES,
   type CustomOrderRequestStatus,
 } from "@/lib/types";
+import { formatCurrency } from "@/lib/format";
 import CustomOrderRequestActions from "../../components/CustomOrderRequestActions";
 
 export const dynamic = "force-dynamic";
@@ -119,11 +120,11 @@ export default async function AdminCustomOrdersPage({ searchParams }: CustomOrde
                   </div>
                   <p className="text-sm text-fh-muted">Submitted {req.createdAt.toLocaleString()}</p>
 
-                  <div className="flex flex-col gap-1 text-sm text-fh-body">
-                    <p>
-                      <span className="font-semibold">Customer:</span> {req.customerName}
-                      {" \u00b7 "}
-                      <a className="underline" href={`mailto:${req.customerEmail}`}>
+                <div className="flex flex-col gap-1 text-sm text-fh-body">
+                  <p>
+                    <span className="font-semibold">Customer:</span> {req.customerName}
+                    {" \u00b7 "}
+                    <a className="underline" href={`mailto:${req.customerEmail}`}>
                         {req.customerEmail}
                       </a>
                       {req.customerPhone ? ` \u00b7 ${req.customerPhone}` : ""}
@@ -134,6 +135,11 @@ export default async function AdminCustomOrdersPage({ searchParams }: CustomOrde
                       <span className="font-semibold">Fulfillment:</span>{" "}
                       {req.fulfillmentPreference ?? "Not specified"}
                       {req.budget ? ` \u00b7 Budget: ${req.budget}` : ""}
+                      {req.paymentPaidAt
+                        ? " \u00b7 Paid"
+                        : typeof req.paymentAmount === "number"
+                          ? ` \u00b7 Payment: ${formatCurrency(req.paymentAmount)}`
+                          : ""}
                     </p>
                   </div>
                 </div>
@@ -143,6 +149,8 @@ export default async function AdminCustomOrdersPage({ searchParams }: CustomOrde
                   customerName={req.customerName}
                   customerEmail={req.customerEmail}
                   currentStatus={req.status as CustomOrderRequestStatus}
+                  paymentAmount={req.paymentAmount}
+                  paymentPaidAt={req.paymentPaidAt ? req.paymentPaidAt.toISOString() : null}
                 />
               </div>
 

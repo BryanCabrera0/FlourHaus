@@ -87,8 +87,13 @@ model CustomOrderRequest {
   requestDetails        String
   requestedDate         DateTime?
   fulfillmentPreference FulfillmentMethod?
+  deliveryAddress       String?
   budget                String?
   status                CustomOrderRequestStatus @default(pending)
+  paymentToken          String?                  @unique
+  paymentAmount         Float?
+  paymentCreatedAt      DateTime?
+  paymentPaidAt         DateTime?
   createdAt             DateTime                 @default(now())
   updatedAt             DateTime                 @default(now()) @updatedAt
   messages              CustomOrderRequestMessage[]

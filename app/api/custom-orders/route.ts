@@ -220,6 +220,7 @@ export async function POST(request: Request) {
         requestDetails: parsedBody.requestDetails,
         requestedDate: parsedBody.requestedDate,
         fulfillmentPreference: parsedBody.fulfillmentPreference,
+        deliveryAddress: parsedBody.deliveryAddress,
         budget: parsedBody.budget,
       },
       select: {

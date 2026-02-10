@@ -62,6 +62,11 @@ export async function POST(request: Request) {
     const fulfillment = parseFulfillment(session.metadata?.fulfillment);
     const deliveryAddress = parseOptionalText(session.metadata?.deliveryAddress, 240);
     const notes = parseOptionalText(session.metadata?.notes, 500);
+    const customOrderRequestIdRaw = parseOptionalText(session.metadata?.customOrderRequestId, 24);
+    const customOrderRequestId =
+      customOrderRequestIdRaw && /^\d+$/.test(customOrderRequestIdRaw)
+        ? Number.parseInt(customOrderRequestIdRaw, 10)
+        : null;
     const scheduledDateRaw = parseOptionalText(session.metadata?.scheduledDate, 10);
     const scheduledDate =
       scheduledDateRaw && isValidDateString(scheduledDateRaw) ? scheduledDateRaw : null;
@@ -92,27 +97,33 @@ export async function POST(request: Request) {
             notes,
           },
         });
-        return;
+      } else {
+        await tx.order.update({
+          where: { id: existing.id },
+          data: {
+            items: session.metadata?.items ?? existing.items,
+            total: (session.amount_total ?? 0) / 100,
+            fulfillment,
+            scheduledDate: scheduledDate ?? existing.scheduledDate,
+            scheduledTimeSlot: scheduledTimeSlot ?? existing.scheduledTimeSlot,
+            deliveryAddress: deliveryAddress ?? existing.deliveryAddress,
+            customerName: session.customer_details?.name ?? existing.customerName,
+            customerPhone: session.customer_details?.phone ?? existing.customerPhone,
+            notes: notes ?? existing.notes,
+            status:
+              existing.status === "new" || existing.status === "paid"
+                ? "paid"
+                : existing.status,
+          },
+        });
       }
 
-      await tx.order.update({
-        where: { id: existing.id },
-        data: {
-          items: session.metadata?.items ?? existing.items,
-          total: (session.amount_total ?? 0) / 100,
-          fulfillment,
-          scheduledDate: scheduledDate ?? existing.scheduledDate,
-          scheduledTimeSlot: scheduledTimeSlot ?? existing.scheduledTimeSlot,
-          deliveryAddress: deliveryAddress ?? existing.deliveryAddress,
-          customerName: session.customer_details?.name ?? existing.customerName,
-          customerPhone: session.customer_details?.phone ?? existing.customerPhone,
-          notes: notes ?? existing.notes,
-          status:
-            existing.status === "new" || existing.status === "paid"
-              ? "paid"
-              : existing.status,
-        },
-      });
+      if (customOrderRequestId && Number.isInteger(customOrderRequestId) && customOrderRequestId > 0) {
+        await tx.customOrderRequest.updateMany({
+          where: { id: customOrderRequestId },
+          data: { paymentPaidAt: new Date() },
+        });
+      }
     });
   }
 
