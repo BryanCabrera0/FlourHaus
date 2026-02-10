@@ -21,9 +21,14 @@ type RuleTx = Prisma.TransactionClient;
 
 export async function enforceMenuItemVariantRules(
   tx: RuleTx,
-  params: { menuItemId: number; category: string; basePrice: number },
+  params: {
+    menuItemId: number;
+    category: string;
+    basePrice: number;
+    cookiePackPrices?: Partial<Record<(typeof COOKIE_VARIANT_PRESETS)[number]["unitCount"], number>>;
+  },
 ): Promise<void> {
-  const { menuItemId, category, basePrice } = params;
+  const { menuItemId, category, basePrice, cookiePackPrices } = params;
 
   const existing = await tx.menuItemVariant.findMany({
     where: { menuItemId },
@@ -40,7 +45,11 @@ export async function enforceMenuItemVariantRules(
   const keepIds: number[] = [];
 
   for (const preset of COOKIE_VARIANT_PRESETS) {
-    const desiredPrice = roundCurrency(basePrice * preset.unitCount);
+    const overridePriceRaw = cookiePackPrices?.[preset.unitCount];
+    const desiredPrice =
+      typeof overridePriceRaw === "number" && Number.isFinite(overridePriceRaw) && overridePriceRaw >= 0
+        ? roundCurrency(overridePriceRaw)
+        : roundCurrency(basePrice * preset.unitCount);
     const candidate = existing.find(
       (variant) =>
         variant.unitCount === preset.unitCount && !keepIds.includes(variant.id),
@@ -49,12 +58,12 @@ export async function enforceMenuItemVariantRules(
     if (candidate) {
       keepIds.push(candidate.id);
 
-      const currentPrice = roundCurrency(candidate.price);
       const needsUpdate =
         candidate.label !== preset.label ||
         candidate.sortOrder !== preset.sortOrder ||
         candidate.isActive !== true ||
-        currentPrice !== desiredPrice;
+        (overridePriceRaw !== undefined &&
+          roundCurrency(candidate.price) !== desiredPrice);
 
       if (needsUpdate) {
         await tx.menuItemVariant.update({
@@ -62,7 +71,7 @@ export async function enforceMenuItemVariantRules(
           data: {
             label: preset.label,
             unitCount: preset.unitCount,
-            price: desiredPrice,
+            ...(overridePriceRaw !== undefined ? { price: desiredPrice } : {}),
             sortOrder: preset.sortOrder,
             isActive: true,
           },
@@ -120,4 +129,3 @@ export async function ensureCookieVariantsForActiveMenuItems(
     }
   });
 }
-

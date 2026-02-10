@@ -15,6 +15,7 @@ type UpdateMenuItemBody = {
   sortOrder?: unknown;
   isFeatured?: unknown;
   featuredSortOrder?: unknown;
+  cookiePackPrices?: unknown;
 };
 
 function normalizeOptionalImageUrl(value: unknown): string | null | undefined {
@@ -58,6 +59,36 @@ function parseUpdateBody(body: UpdateMenuItemBody | null) {
   }
 
   const updateData: Record<string, unknown> = {};
+  const cookiePackPrices = (() => {
+    if (body.cookiePackPrices === undefined) {
+      return undefined;
+    }
+    if (typeof body.cookiePackPrices !== "object" || body.cookiePackPrices === null || Array.isArray(body.cookiePackPrices)) {
+      return null;
+    }
+
+    const input = body.cookiePackPrices as Record<string, unknown>;
+    const presets = [4, 8, 12] as const;
+    const output: Partial<Record<(typeof presets)[number], number>> = {};
+
+    for (const preset of presets) {
+      if (!(String(preset) in input)) {
+        continue;
+      }
+      const raw = input[String(preset)];
+      const parsed = typeof raw === "number" ? raw : Number(raw);
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        return null;
+      }
+      output[preset] = parsed;
+    }
+
+    return Object.keys(output).length > 0 ? output : null;
+  })();
+
+  if (cookiePackPrices === null) {
+    return null;
+  }
 
   if (typeof body.name === "string") {
     const name = body.name.trim();
@@ -133,7 +164,14 @@ function parseUpdateBody(body: UpdateMenuItemBody | null) {
     updateData.imageUrl = imageUrl;
   }
 
-  return Object.keys(updateData).length > 0 ? updateData : null;
+  if (Object.keys(updateData).length === 0 && cookiePackPrices === undefined) {
+    return null;
+  }
+
+  return {
+    updateData,
+    cookiePackPrices,
+  };
 }
 
 export async function PATCH(
@@ -165,20 +203,19 @@ export async function PATCH(
         return null;
       }
 
-      const menuItem = await tx.menuItem.update({
-        where: { id },
-        data: updateData,
-        include: {
-          variants: {
-            orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
-          },
-        },
-      });
+      const hasMenuItemUpdates = Object.keys(updateData.updateData).length > 0;
+      const menuItem = hasMenuItemUpdates
+        ? await tx.menuItem.update({
+            where: { id },
+            data: updateData.updateData,
+          })
+        : existing;
 
       await enforceMenuItemVariantRules(tx, {
-        menuItemId: menuItem.id,
+        menuItemId: id,
         category: menuItem.category,
         basePrice: menuItem.price,
+        cookiePackPrices: updateData.cookiePackPrices,
       });
 
       await tx.adminAuditLog.create({
@@ -196,7 +233,10 @@ export async function PATCH(
               isActive: existing.isActive,
               sortOrder: existing.sortOrder,
             },
-            after: updateData,
+            after: {
+              ...updateData.updateData,
+              ...(updateData.cookiePackPrices ? { cookiePackPrices: updateData.cookiePackPrices } : {}),
+            },
           }),
           actorEmail: auth.session.email,
         },

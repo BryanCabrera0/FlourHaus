@@ -26,6 +26,9 @@ type MenuDraft = {
   description: string;
   category: string;
   price: string;
+  cookiePackPrice4: string;
+  cookiePackPrice8: string;
+  cookiePackPrice12: string;
   imageUrl: string;
   isActive: boolean;
   isFeatured: boolean;
@@ -50,11 +53,27 @@ function sortItems(items: AdminMenuItem[]): AdminMenuItem[] {
 }
 
 function toDraft(item: AdminMenuItem | null): MenuDraft {
+  const normalizedCategory = item?.category?.trim().toLowerCase() ?? "";
+  const isCookie = normalizedCategory === "cookies" || normalizedCategory === "cookie";
+  const variantPrice = (unitCount: number) => {
+    const match = item?.variants?.find((variant) => variant.unitCount === unitCount) ?? null;
+    if (match) {
+      return match.price.toString();
+    }
+    if (!item) {
+      return "";
+    }
+    return (Math.round(item.price * unitCount * 100) / 100).toString();
+  };
+
   return {
     name: item?.name ?? "",
     description: item?.description ?? "",
     category: item?.category ?? "",
     price: (item?.price ?? 0).toString(),
+    cookiePackPrice4: isCookie ? variantPrice(4) : "",
+    cookiePackPrice8: isCookie ? variantPrice(8) : "",
+    cookiePackPrice12: isCookie ? variantPrice(12) : "",
     imageUrl: item?.imageUrl ?? "",
     isActive: item?.isActive ?? true,
     isFeatured: item?.isFeatured ?? false,
@@ -513,6 +532,9 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
     const price = parsePrice(editorDraft.price);
     const sortOrder = parseSortOrder(editorDraft.sortOrder);
     const featuredSortOrder = editorDraft.isFeatured ? parseSortOrder(editorDraft.featuredSortOrder) : 0;
+    const cookiePackPrice4 = isCookieDraft ? parsePrice(editorDraft.cookiePackPrice4) : null;
+    const cookiePackPrice8 = isCookieDraft ? parsePrice(editorDraft.cookiePackPrice8) : null;
+    const cookiePackPrice12 = isCookieDraft ? parsePrice(editorDraft.cookiePackPrice12) : null;
 
     if (
       !editorDraft.name.trim() ||
@@ -526,11 +548,25 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
       return;
     }
 
+    if (isCookieDraft && (cookiePackPrice4 === null || cookiePackPrice8 === null || cookiePackPrice12 === null)) {
+      setError("Cookie pack prices (4, 8, 12) are required for cookie items.");
+      return;
+    }
+
     const payload = {
       name: editorDraft.name.trim(),
       description: editorDraft.description.trim(),
       category: editorDraft.category.trim(),
       price,
+      ...(isCookieDraft
+        ? {
+            cookiePackPrices: {
+              4: cookiePackPrice4!,
+              8: cookiePackPrice8!,
+              12: cookiePackPrice12!,
+            },
+          }
+        : {}),
       imageUrl: editorDraft.imageUrl,
       isActive: editorDraft.isActive,
       isFeatured: editorDraft.isFeatured,
@@ -909,10 +945,50 @@ export default function AdminMenuManager({ initialItems }: AdminMenuManagerProps
                   />
                   {isCookieDraft ? (
                     <p className="text-xs mt-1 text-fh-muted">
-                      Cookie items are sold only in packs of 4 / 8 / 12. The price above is per cookie.
+                      Cookie items are sold only in packs of 4 / 8 / 12. Set pack pricing below.
                     </p>
                   ) : null}
                 </div>
+                {isCookieDraft ? (
+                  <div className="md:col-span-2">
+                    <p className="admin-label">Cookie Pack Prices</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div>
+                        <label className="admin-label">4 Pack</label>
+                        <input
+                          value={editorDraft.cookiePackPrice4}
+                          onChange={(e) => setEditorDraft((prev) => ({ ...prev, cookiePackPrice4: e.target.value }))}
+                          className="admin-input"
+                          disabled={editorBusy}
+                          inputMode="decimal"
+                          placeholder="13.99"
+                        />
+                      </div>
+                      <div>
+                        <label className="admin-label">8 Pack</label>
+                        <input
+                          value={editorDraft.cookiePackPrice8}
+                          onChange={(e) => setEditorDraft((prev) => ({ ...prev, cookiePackPrice8: e.target.value }))}
+                          className="admin-input"
+                          disabled={editorBusy}
+                          inputMode="decimal"
+                          placeholder="26.99"
+                        />
+                      </div>
+                      <div>
+                        <label className="admin-label">12 Pack</label>
+                        <input
+                          value={editorDraft.cookiePackPrice12}
+                          onChange={(e) => setEditorDraft((prev) => ({ ...prev, cookiePackPrice12: e.target.value }))}
+                          className="admin-input"
+                          disabled={editorBusy}
+                          inputMode="decimal"
+                          placeholder="38.99"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
                 <div className="flex items-end gap-4">
                   <label className="text-sm flex items-center gap-2 text-fh-muted">
                     <input

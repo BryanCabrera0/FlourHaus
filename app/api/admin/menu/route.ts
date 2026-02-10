@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/adminApi";
-import { enforceMenuItemVariantRules } from "@/lib/menuItemVariantRules";
+import { enforceMenuItemVariantRules, isCookieCategory } from "@/lib/menuItemVariantRules";
 
 export const runtime = "nodejs";
 
@@ -15,6 +15,7 @@ type CreateMenuItemBody = {
   sortOrder?: unknown;
   isFeatured?: unknown;
   featuredSortOrder?: unknown;
+  cookiePackPrices?: unknown;
 };
 
 function normalizeOptionalImageUrl(value: unknown): string | null {
@@ -62,16 +63,53 @@ function parseCreateBody(body: CreateMenuItemBody | null) {
     return null;
   }
 
+  const cookiePackPrices = (() => {
+    if (!isCookieCategory(category)) {
+      return undefined;
+    }
+    if (body?.cookiePackPrices === undefined) {
+      return undefined;
+    }
+    if (typeof body.cookiePackPrices !== "object" || body.cookiePackPrices === null || Array.isArray(body.cookiePackPrices)) {
+      return null;
+    }
+
+    const input = body.cookiePackPrices as Record<string, unknown>;
+    const presets = [4, 8, 12] as const;
+    const output: Partial<Record<(typeof presets)[number], number>> = {};
+
+    for (const preset of presets) {
+      if (!(String(preset) in input)) {
+        continue;
+      }
+      const raw = input[String(preset)];
+      const parsed = typeof raw === "number" ? raw : Number(raw);
+      if (!Number.isFinite(parsed) || parsed < 0) {
+        return null;
+      }
+      output[preset] = parsed;
+    }
+
+    return Object.keys(output).length > 0 ? output : null;
+  })();
+
+  if (cookiePackPrices === null) {
+    return null;
+  }
+
   return {
-    name,
-    description,
-    category,
-    price,
-    imageUrl: normalizeOptionalImageUrl(body?.imageUrl),
-    isActive: typeof body?.isActive === "boolean" ? body.isActive : true,
-    sortOrder,
-    isFeatured: typeof body?.isFeatured === "boolean" ? body.isFeatured : false,
-    featuredSortOrder,
+    data: {
+      name,
+      description,
+      category,
+      price,
+      imageUrl: normalizeOptionalImageUrl(body?.imageUrl),
+      isActive: typeof body?.isActive === "boolean" ? body.isActive : true,
+      sortOrder,
+      isFeatured: typeof body?.isFeatured === "boolean" ? body.isFeatured : false,
+      featuredSortOrder,
+    },
+    cookiePackPrices,
   };
 }
 
@@ -112,7 +150,7 @@ export async function POST(request: NextRequest) {
   try {
     const created = await prisma.$transaction(async (tx) => {
       const menuItem = await tx.menuItem.create({
-        data: parsedBody,
+        data: parsedBody.data,
         include: {
           variants: {
             orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
@@ -124,6 +162,7 @@ export async function POST(request: NextRequest) {
         menuItemId: menuItem.id,
         category: menuItem.category,
         basePrice: menuItem.price,
+        cookiePackPrices: parsedBody.cookiePackPrices,
       });
 
       await tx.adminAuditLog.create({
