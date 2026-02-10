@@ -76,11 +76,7 @@ export default async function HomePage() {
             aria-hidden="true"
             viewBox="0 0 24 24"
             className="h-5 w-5 text-fh-accent"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+            fill="currentColor"
           >
             <path d="M12 3.6l2.67 5.4 5.96.86-4.31 4.2 1.02 5.94L12 17.2 6.66 20l1.02-5.94-4.31-4.2 5.96-.86L12 3.6z" />
           </svg>
