@@ -1,29 +1,32 @@
 import Link from "next/link";
 import prisma from "@/lib/prisma";
+import type { Prisma } from "@/generated/prisma/client";
 import MenuItemCard from "./components/MenuItemCard";
 import CustomOrderRequestForm from "./components/CustomOrderRequestForm";
 
 export const dynamic = "force-dynamic";
 
-export default async function HomePage() {
-  const featuredItems = await prisma.menuItem.findMany({
+const MENU_ITEM_CARD_SELECT: Prisma.MenuItemSelect = {
+  id: true,
+  name: true,
+  description: true,
+  price: true,
+  imageUrl: true,
+  variants: {
+    where: { isActive: true },
+    orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
     select: {
       id: true,
-      name: true,
-      description: true,
+      label: true,
+      unitCount: true,
       price: true,
-      imageUrl: true,
-      variants: {
-        where: { isActive: true },
-        orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
-        select: {
-          id: true,
-          label: true,
-          unitCount: true,
-          price: true,
-        },
-      },
     },
+  },
+};
+
+export default async function HomePage() {
+  const featuredItems = await prisma.menuItem.findMany({
+    select: MENU_ITEM_CARD_SELECT,
     where: { isActive: true, isFeatured: true },
     orderBy: [
       { featuredSortOrder: "asc" },
@@ -37,23 +40,7 @@ export default async function HomePage() {
     featuredItems.length > 0
       ? featuredItems
       : await prisma.menuItem.findMany({
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            price: true,
-            imageUrl: true,
-            variants: {
-              where: { isActive: true },
-              orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
-              select: {
-                id: true,
-                label: true,
-                unitCount: true,
-                price: true,
-              },
-            },
-          },
+          select: MENU_ITEM_CARD_SELECT,
           where: { isActive: true },
           orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
           take: 6,

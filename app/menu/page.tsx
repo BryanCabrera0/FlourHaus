@@ -1,28 +1,33 @@
 import prisma from "@/lib/prisma";
+import type { Prisma } from "@/generated/prisma/client";
 import MenuItemCard from "../components/MenuItemCard";
 
 export const dynamic = "force-dynamic";
 
+const MENU_ITEM_VARIANT_SELECT: Prisma.MenuItem$variantsArgs = {
+  where: { isActive: true },
+  orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
+  select: {
+    id: true,
+    label: true,
+    unitCount: true,
+    price: true,
+  },
+};
+
+const MENU_PAGE_SELECT: Prisma.MenuItemSelect = {
+  id: true,
+  name: true,
+  description: true,
+  price: true,
+  category: true,
+  imageUrl: true,
+  variants: MENU_ITEM_VARIANT_SELECT,
+};
+
 export default async function MenuPage() {
   const menuItems = await prisma.menuItem.findMany({
-    select: {
-      id: true,
-      name: true,
-      description: true,
-      price: true,
-      category: true,
-      imageUrl: true,
-      variants: {
-        where: { isActive: true },
-        orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
-        select: {
-          id: true,
-          label: true,
-          unitCount: true,
-          price: true,
-        },
-      },
-    },
+    select: MENU_PAGE_SELECT,
     where: { isActive: true },
     orderBy: [{ sortOrder: "asc" }, { category: "asc" }, { id: "asc" }],
   });

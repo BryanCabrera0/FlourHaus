@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import AddToCartButton from "./AddToCartButton";
 import { formatCurrency } from "@/lib/format";
@@ -11,7 +11,7 @@ type MenuItemCardProps = {
 };
 
 export default function MenuItemCard({ item }: MenuItemCardProps) {
-  const variants = useMemo(() => item.variants ?? [], [item.variants]);
+  const variants = item.variants ?? [];
   const hasVariants = variants.length > 0;
 
   const [selectedVariantId, setSelectedVariantId] = useState<number | null>(

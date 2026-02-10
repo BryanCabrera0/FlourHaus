@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "*.public.blob.vercel-storage.com",
       },
+      // Some Blob URLs may not include the `.public` segment; allow them as well.
+      {
+        protocol: "https",
+        hostname: "*.blob.vercel-storage.com",
+      },
     ],
   },
 };
