@@ -386,7 +386,14 @@
 }
 
 .bg-cream {
-  background: rgba(250, 255, 199, 0.72);
+  /* Fade into the surrounding surface tint so the section doesn't look like a hard band. */
+  background: linear-gradient(
+    180deg,
+    rgba(215, 238, 255, 0.6) 0%,
+    rgba(250, 255, 199, 0.72) 18%,
+    rgba(250, 255, 199, 0.72) 82%,
+    rgba(215, 238, 255, 0.6) 100%
+  );
 }
 
 /* ── Hero background ──────────────────────── */
