@@ -562,7 +562,12 @@
 
 /* ── Stat card with left accent ──────────── */
 .stat-card {
-  background: rgba(255, 255, 255, 0.78);
+  --stat-tint: rgba(255, 255, 255, 0.78);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.86) 0%,
+    var(--stat-tint) 100%
+  );
   backdrop-filter: blur(14px) saturate(1.12);
   -webkit-backdrop-filter: blur(14px) saturate(1.12);
   border-radius: 16px;
@@ -579,16 +584,16 @@
     0 8px 20px rgba(45, 40, 69, 0.06);
 }
 .stat-card-amber {
-  background: rgba(250, 255, 199, 0.55);
+  --stat-tint: rgba(250, 255, 199, 0.6);
 }
 .stat-card-green {
-  background: rgba(204, 241, 255, 0.55);
+  --stat-tint: rgba(204, 241, 255, 0.62);
 }
 .stat-card-teal {
-  background: rgba(215, 238, 255, 0.55);
+  --stat-tint: rgba(224, 215, 255, 0.62);
 }
 .stat-card-rose {
-  background: rgba(255, 204, 225, 0.55);
+  --stat-tint: rgba(255, 204, 225, 0.6);
 }
 
 /* ── Status badges ───────────────────────── */
