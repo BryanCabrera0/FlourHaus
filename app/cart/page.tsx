@@ -490,6 +490,11 @@ export default function CartPage() {
             >
               {isCheckingOut ? "Preparing..." : "Checkout"}
             </button>
+            {fulfillment === "pickup" ? (
+              <p className="mt-3 text-xs text-fh-muted leading-relaxed">
+                Pickup is in the 33185 area. The exact pickup address will be provided after your order is placed.
+              </p>
+            ) : null}
           </div>
         </div>
       </div>
