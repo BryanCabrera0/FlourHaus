@@ -492,7 +492,7 @@ export default function CartPage() {
             </button>
             {fulfillment === "pickup" ? (
               <p className="mt-3 text-xs text-fh-muted leading-relaxed">
-                Pickup is in the 33185 area. The exact pickup address will be provided after your order is placed.
+                Pickup is in the 33185 area. The exact pickup address will be provided once your order is ready for pickup.
               </p>
             ) : null}
           </div>
