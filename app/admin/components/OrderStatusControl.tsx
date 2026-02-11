@@ -17,6 +17,7 @@ export default function OrderStatusControl({
   const [status, setStatus] = useState<OrderStatus>(currentStatus);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   async function handleSave() {
     if (status === currentStatus || isSaving) {
@@ -24,6 +25,7 @@ export default function OrderStatusControl({
     }
 
     setError(null);
+    setSuccess(null);
     setIsSaving(true);
     try {
       const response = await fetch(`/api/admin/orders/${orderId}/status`, {
@@ -31,12 +33,41 @@ export default function OrderStatusControl({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ status }),
       });
+      const payload = (await response.json().catch(() => null)) as
+        | {
+            error?: string;
+            pickupReadyNotification?: {
+              status?: "sent" | "skipped" | "failed";
+              to?: string;
+              reason?: string;
+              error?: string;
+            };
+          }
+        | null;
+
       if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as
-          | { error?: string }
-          | null;
         throw new Error(payload?.error ?? "Failed to update status.");
       }
+
+      const notification = payload?.pickupReadyNotification;
+      if (notification?.status === "sent") {
+        setSuccess(
+          notification.to
+            ? `Pickup-ready email sent to ${notification.to}.`
+            : "Pickup-ready email sent.",
+        );
+      } else if (notification?.status === "skipped") {
+        if (notification.reason) {
+          setSuccess(notification.reason);
+        }
+      } else if (notification?.status === "failed") {
+        if (notification.error) {
+          setError(`Status updated, but failed to notify customer: ${notification.error}`);
+        } else {
+          setError("Status updated, but failed to notify customer.");
+        }
+      }
+
       router.refresh();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to update status.";
@@ -73,6 +104,9 @@ export default function OrderStatusControl({
       </div>
       {error ? (
         <p className="text-xs text-fh-danger">{error}</p>
+      ) : null}
+      {success ? (
+        <p className="text-xs text-fh-accent-blue">{success}</p>
       ) : null}
     </div>
   );

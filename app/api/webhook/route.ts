@@ -62,6 +62,9 @@ export async function POST(request: Request) {
     const fulfillment = parseFulfillment(session.metadata?.fulfillment);
     const deliveryAddress = parseOptionalText(session.metadata?.deliveryAddress, 240);
     const notes = parseOptionalText(session.metadata?.notes, 500);
+    const customerEmail =
+      parseOptionalText(session.customer_details?.email, 320) ??
+      parseOptionalText(session.customer_email, 320);
     const customOrderRequestIdRaw = parseOptionalText(session.metadata?.customOrderRequestId, 24);
     const customOrderRequestId =
       customOrderRequestIdRaw && /^\d+$/.test(customOrderRequestIdRaw)
@@ -93,6 +96,7 @@ export async function POST(request: Request) {
             stripeSessionId: session.id,
             status: "paid",
             customerName: session.customer_details?.name ?? null,
+            customerEmail,
             customerPhone: session.customer_details?.phone ?? null,
             notes,
           },
@@ -108,6 +112,7 @@ export async function POST(request: Request) {
             scheduledTimeSlot: scheduledTimeSlot ?? existing.scheduledTimeSlot,
             deliveryAddress: deliveryAddress ?? existing.deliveryAddress,
             customerName: session.customer_details?.name ?? existing.customerName,
+            customerEmail: customerEmail ?? existing.customerEmail,
             customerPhone: session.customer_details?.phone ?? existing.customerPhone,
             notes: notes ?? existing.notes,
             status:

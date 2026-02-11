@@ -171,6 +171,26 @@ export default async function AdminOrdersPage({ searchParams }: OrdersPageProps)
                       </div>
                     ) : null}
 
+                    {order.customerEmail ? (
+                      <div className="flex items-center gap-2 text-sm text-fh-body">
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <rect x="3" y="5" width="18" height="14" rx="2" />
+                          <path d="M3 7l9 6 9-6" />
+                        </svg>
+                        <span>{order.customerEmail}</span>
+                      </div>
+                    ) : null}
+
                     {scheduleLabel ? (
                       <div className="flex items-center gap-2 text-sm text-fh-body">
                         <svg

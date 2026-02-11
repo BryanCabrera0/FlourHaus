@@ -72,6 +72,7 @@ model Order {
   stripeSessionId String            @unique
   status          OrderStatus       @default(new)
   customerName    String?
+  customerEmail   String?
   customerPhone   String?
   notes           String?
   createdAt       DateTime @default(now())

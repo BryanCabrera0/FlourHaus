@@ -58,6 +58,7 @@ export async function GET(request: NextRequest) {
       stripeSessionId: order.stripeSessionId,
       status: order.status,
       customerName: order.customerName,
+      customerEmail: order.customerEmail,
       customerPhone: order.customerPhone,
       notes: order.notes,
       createdAt: order.createdAt.toISOString(),

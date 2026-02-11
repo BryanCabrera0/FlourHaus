@@ -4,7 +4,6 @@ import type { FulfillmentMethod, OrderItem } from "@/lib/types";
 import { getStripeClient } from "@/lib/stripe";
 import {
   DELIVERY_MAX_DISTANCE_MILES,
-  DELIVERY_ORIGIN_ADDRESS,
   getDeliveryEligibility,
 } from "@/lib/delivery";
 import {
@@ -168,7 +167,7 @@ export async function POST(request: Request) {
       if (!eligibility.eligible) {
         return NextResponse.json(
           {
-            error: `Delivery is available within ${DELIVERY_MAX_DISTANCE_MILES} miles of ${DELIVERY_ORIGIN_ADDRESS}. Your address is about ${eligibility.distanceMiles} miles away.`,
+            error: `Delivery is available within ${DELIVERY_MAX_DISTANCE_MILES} miles of the 33185 area. Your address is about ${eligibility.distanceMiles} miles away.`,
           },
           { status: 400 },
         );
