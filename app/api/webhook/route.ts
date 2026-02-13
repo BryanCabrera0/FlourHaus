@@ -4,6 +4,10 @@ import prisma from "@/lib/prisma";
 import { FULFILLMENT_METHODS } from "@/lib/types";
 import { getStripeClient } from "@/lib/stripe";
 import { isValidDateString, isValidTimeSlot } from "@/lib/fulfillmentSchedule";
+import { isSmsSendingConfigured, sendSms } from "@/lib/sms";
+import { getStoreSettingsSnapshot } from "@/lib/storeSettings";
+import { parseOrderItems } from "@/lib/orderItems";
+import { formatCurrency } from "@/lib/format";
 
 export const runtime = "nodejs";
 
@@ -130,6 +134,31 @@ export async function POST(request: Request) {
         });
       }
     });
+
+    // Fire-and-forget SMS notification to owner
+    if (isSmsSendingConfigured()) {
+      void (async () => {
+        try {
+          const { ownerSmsPhone, ownerSmsCarrier } = await getStoreSettingsSnapshot();
+          if (!ownerSmsPhone || !ownerSmsCarrier) return;
+
+          const order = await prisma.order.findUnique({
+            where: { stripeSessionId: session.id },
+            select: { id: true },
+          });
+
+          const orderId = order?.id ?? "?";
+          const items = parseOrderItems(session.metadata?.items ?? "[]");
+          const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
+          const total = formatCurrency((session.amount_total ?? 0) / 100);
+
+          const smsBody = `New order #${orderId} — ${total} (${fulfillment}) — ${itemCount} item${itemCount === 1 ? "" : "s"}`;
+          await sendSms({ phone: ownerSmsPhone, carrier: ownerSmsCarrier, body: smsBody });
+        } catch {
+          // Non-critical: webhook must return 200 to Stripe regardless
+        }
+      })();
+    }
   }
 
   return NextResponse.json({ received: true });

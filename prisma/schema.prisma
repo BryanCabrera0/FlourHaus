@@ -127,6 +127,8 @@ model AdminAuditLog {
 model StoreSettings {
   id              Int      @id @default(1)
   stripeAccountId String?  @unique
+  ownerSmsPhone   String?
+  ownerSmsCarrier String?
   fulfillmentSchedule Json?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @default(now()) @updatedAt

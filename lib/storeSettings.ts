@@ -13,6 +13,8 @@ type DbClient = PrismaClient | Prisma.TransactionClient;
 export type StoreSettingsSnapshot = {
   stripeAccountId: string | null;
   schedule: FulfillmentScheduleConfig;
+  ownerSmsPhone: string | null;
+  ownerSmsCarrier: string | null;
 };
 
 export async function getStoreSettingsSnapshot(
@@ -20,7 +22,7 @@ export async function getStoreSettingsSnapshot(
 ): Promise<StoreSettingsSnapshot> {
   const defaults = getDefaultScheduleConfig();
 
-  const select = { stripeAccountId: true, fulfillmentSchedule: true } as const;
+  const select = { stripeAccountId: true, fulfillmentSchedule: true, ownerSmsPhone: true, ownerSmsCarrier: true } as const;
 
   const settings =
     (await db.storeSettings.findUnique({
@@ -57,5 +59,13 @@ export async function getStoreSettingsSnapshot(
         ? settings.stripeAccountId.trim()
         : null,
     schedule,
+    ownerSmsPhone:
+      typeof settings.ownerSmsPhone === "string" && settings.ownerSmsPhone.trim()
+        ? settings.ownerSmsPhone.trim()
+        : null,
+    ownerSmsCarrier:
+      typeof settings.ownerSmsCarrier === "string" && settings.ownerSmsCarrier.trim()
+        ? settings.ownerSmsCarrier.trim()
+        : null,
   };
 }
