@@ -50,7 +50,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   const rawPhone =
-    typeof body.ownerSmsPhone === "string"
+    typeof body.ownerSmsPhone === "string" && body.ownerSmsPhone.length <= 30
       ? body.ownerSmsPhone.replace(/\D/g, "")
       : null;
 
@@ -148,8 +148,8 @@ export async function POST(request: NextRequest) {
     select: { ownerSmsPhone: true, ownerSmsCarrier: true },
   });
 
-  const phone = settings?.ownerSmsPhone?.trim();
-  const carrier = settings?.ownerSmsCarrier?.trim();
+  const phone = settings?.ownerSmsPhone ?? null;
+  const carrier = settings?.ownerSmsCarrier ?? null;
 
   if (!phone || !carrier) {
     return NextResponse.json(

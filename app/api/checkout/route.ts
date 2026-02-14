@@ -331,7 +331,7 @@ export async function POST(request: Request) {
     if (!session.client_secret) {
       return NextResponse.json(
         { error: "Stripe checkout client secret is unavailable" },
-        { status: 502 }
+        { status: 500 }
       );
     }
 
@@ -340,7 +340,7 @@ export async function POST(request: Request) {
     console.error("Stripe checkout session creation failed", error);
     return NextResponse.json(
       { error: "Unable to create checkout session" },
-      { status: 502 }
+      { status: 500 }
     );
   }
 }

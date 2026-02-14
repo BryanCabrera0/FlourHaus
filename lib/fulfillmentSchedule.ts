@@ -109,7 +109,7 @@ export function normalizeScheduleConfig(value: unknown): FulfillmentScheduleConf
   }
 
   const obj = value as Record<string, unknown>;
-  const version = obj.version === 1 ? 1 : 1;
+  const version = 1;
 
   const minDaysAheadRaw =
     typeof obj.minDaysAhead === "number" ? obj.minDaysAhead : Number(obj.minDaysAhead);

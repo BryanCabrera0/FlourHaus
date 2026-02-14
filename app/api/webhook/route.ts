@@ -129,7 +129,7 @@ export async function POST(request: Request) {
 
       if (customOrderRequestId && Number.isInteger(customOrderRequestId) && customOrderRequestId > 0) {
         await tx.customOrderRequest.updateMany({
-          where: { id: customOrderRequestId },
+          where: { id: customOrderRequestId, paymentPaidAt: null },
           data: { paymentPaidAt: new Date() },
         });
       }
