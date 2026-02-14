@@ -168,5 +168,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: result.error }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true });
+  await prisma.adminAuditLog
+    .create({
+      data: {
+        action: "settings.sms.test",
+        entityType: "StoreSettings",
+        entityId: 1,
+        details: JSON.stringify({
+          phone,
+          carrier,
+          to: result.to,
+          providerMessageId: result.id,
+        }),
+        actorEmail: auth.session.email,
+      },
+    })
+    .catch(() => null);
+
+  return NextResponse.json({ ok: true, to: result.to, providerMessageId: result.id });
 }

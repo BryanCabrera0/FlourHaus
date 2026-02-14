@@ -101,6 +101,8 @@ export default function AdminSmsSettings({
       });
       const payload = (await response.json().catch(() => null)) as {
         ok?: boolean;
+        to?: string;
+        providerMessageId?: string | null;
         error?: string;
       } | null;
 
@@ -108,7 +110,11 @@ export default function AdminSmsSettings({
         throw new Error(payload?.error ?? "Failed to send test SMS.");
       }
 
-      setSuccess("Test SMS sent! Check your phone.");
+      const extra =
+        payload?.to
+          ? ` Sent via ${payload.to}.`
+          : "";
+      setSuccess(`Test SMS sent!${extra} It may take a minute to arrive.`);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to send test SMS.",

@@ -21,7 +21,7 @@ export const SMS_CARRIERS: Record<string, { label: string; gateway: string }> =
   };
 
 type SendSmsResult =
-  | { ok: true }
+  | { ok: true; id: string | null; to: string }
   | { ok: false; error: string };
 
 export function isSmsSendingConfigured(): boolean {
@@ -47,16 +47,23 @@ export async function sendSms({
   }
 
   const to = `${phone}@${entry.gateway}`;
+  const normalizedBody = body.trim().replace(/\s+/g, " ");
+  const subject =
+    normalizedBody.length > 78 ? normalizedBody.slice(0, 78) : normalizedBody;
+  const text =
+    normalizedBody.length > 320 ? normalizedBody.slice(0, 320) : normalizedBody;
 
   const result = await sendTransactionalEmail({
     to,
-    subject: "",
-    text: body,
+    // Some carriers only surface the email subject as the SMS body, so we
+    // include the message in both fields.
+    subject: subject || "Flour Haus",
+    text: text || "Flour Haus",
   });
 
   if (!result.ok) {
     return { ok: false, error: result.error };
   }
 
-  return { ok: true };
+  return { ok: true, id: result.id, to };
 }
