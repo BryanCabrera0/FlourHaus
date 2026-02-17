@@ -23,6 +23,25 @@ function isConnectAccountUnavailable(error: unknown): boolean {
   );
 }
 
+function hasActiveTransferCapability(account: Stripe.Account): boolean {
+  const capabilities = account.capabilities;
+  if (!capabilities || typeof capabilities !== "object") {
+    return true;
+  }
+
+  const legacyTransfers = capabilities.transfers;
+  if (typeof legacyTransfers === "string") {
+    return legacyTransfers === "active";
+  }
+
+  const nextTransfers = (capabilities as Record<string, unknown>).stripe_transfers;
+  if (typeof nextTransfers === "string") {
+    return nextTransfers === "active";
+  }
+
+  return true;
+}
+
 export async function resolveConnectedStripeAccountId(
   stripe: Stripe,
   accountId: string | null,
@@ -36,6 +55,9 @@ export async function resolveConnectedStripeAccountId(
     if ("deleted" in retrieved && retrieved.deleted) {
       return null;
     }
+    if (!hasActiveTransferCapability(retrieved)) {
+      return null;
+    }
     return retrieved.id;
   } catch (error) {
     if (isConnectAccountUnavailable(error)) {
@@ -46,4 +68,3 @@ export async function resolveConnectedStripeAccountId(
     return null;
   }
 }
-

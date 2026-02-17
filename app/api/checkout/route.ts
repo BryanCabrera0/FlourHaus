@@ -125,6 +125,11 @@ function buildItemUnavailableMessage(count: number): string {
   return `${count} items in your cart are unavailable. Please refresh the menu and try again.`;
 }
 
+function isTransferCapabilityError(error: unknown): boolean {
+  const code = (error as { code?: unknown } | null)?.code;
+  return code === "insufficient_capabilities_for_transfer";
+}
+
 export async function POST(request: Request) {
   const payload = parseCheckoutRequest(await request.json().catch(() => null));
   if (!payload) {
@@ -293,40 +298,53 @@ export async function POST(request: Request) {
       storeSettings.stripeAccountId,
     );
 
-    const session = await stripe.checkout.sessions.create({
-      ui_mode: "embedded",
-      redirect_on_completion: "never",
-      payment_method_types: ["card"],
-      line_items: normalizedStripeItems.map((item) => ({
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: item.name,
-          },
-          unit_amount: Math.round(item.price * 100),
-        },
-        quantity: item.quantity,
-      })),
-      ...(connectedAccountId
-        ? {
-            // Route payouts to the connected Stripe account when configured.
-            payment_intent_data: {
-              on_behalf_of: connectedAccountId,
-              transfer_data: { destination: connectedAccountId },
+    const createSession = (routeToConnectedAccount: boolean) =>
+      stripe.checkout.sessions.create({
+        ui_mode: "embedded",
+        redirect_on_completion: "never",
+        payment_method_types: ["card"],
+        line_items: normalizedStripeItems.map((item) => ({
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: item.name,
             },
-          }
-        : {}),
-      metadata: {
-        fulfillment: payload.fulfillment,
-        items: JSON.stringify(normalizedStripeItems),
-        scheduledDate: payload.scheduledDate,
-        scheduledTimeSlot: payload.scheduledTimeSlot,
-        ...(deliveryAddress ? { deliveryAddress } : {}),
-        ...(payload.notes ? { notes: payload.notes } : {}),
-      },
-      phone_number_collection: { enabled: true },
-      mode: "payment",
-    });
+            unit_amount: Math.round(item.price * 100),
+          },
+          quantity: item.quantity,
+        })),
+        ...(routeToConnectedAccount && connectedAccountId
+          ? {
+              // Route payouts to the connected Stripe account when configured.
+              payment_intent_data: {
+                on_behalf_of: connectedAccountId,
+                transfer_data: { destination: connectedAccountId },
+              },
+            }
+          : {}),
+        metadata: {
+          fulfillment: payload.fulfillment,
+          items: JSON.stringify(normalizedStripeItems),
+          scheduledDate: payload.scheduledDate,
+          scheduledTimeSlot: payload.scheduledTimeSlot,
+          ...(deliveryAddress ? { deliveryAddress } : {}),
+          ...(payload.notes ? { notes: payload.notes } : {}),
+        },
+        phone_number_collection: { enabled: true },
+        mode: "payment",
+      });
+
+    let session;
+    try {
+      session = await createSession(connectedAccountId !== null);
+    } catch (error) {
+      if (connectedAccountId && isTransferCapabilityError(error)) {
+        // Fallback to platform checkout so customers can still place orders.
+        session = await createSession(false);
+      } else {
+        throw error;
+      }
+    }
 
     if (!session.client_secret) {
       return NextResponse.json(

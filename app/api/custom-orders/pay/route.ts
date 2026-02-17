@@ -77,6 +77,11 @@ function normalizeNotes(value: unknown): string | undefined {
   return trimmed.length > 500 ? trimmed.slice(0, 500) : trimmed;
 }
 
+function isTransferCapabilityError(error: unknown): boolean {
+  const code = (error as { code?: unknown } | null)?.code;
+  return code === "insufficient_capabilities_for_transfer";
+}
+
 export async function POST(request: Request) {
   const payload = parseBody(await request.json().catch(() => null));
   if (!payload) {
@@ -187,42 +192,54 @@ export async function POST(request: Request) {
 
     const notes = normalizeNotes(`Custom order details: ${customOrder.desiredItems}\n${customOrder.requestDetails}`);
 
-    const session = await stripe.checkout.sessions.create({
-      ui_mode: "embedded",
-      redirect_on_completion: "never",
-      payment_method_types: ["card"],
-      line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: item.name,
+    const createSession = (routeToConnectedAccount: boolean) =>
+      stripe.checkout.sessions.create({
+        ui_mode: "embedded",
+        redirect_on_completion: "never",
+        payment_method_types: ["card"],
+        line_items: [
+          {
+            price_data: {
+              currency: "usd",
+              product_data: {
+                name: item.name,
+              },
+              unit_amount: unitAmount,
             },
-            unit_amount: unitAmount,
+            quantity: 1,
           },
-          quantity: 1,
+        ],
+        ...(routeToConnectedAccount && connectedAccountId
+          ? {
+              payment_intent_data: {
+                on_behalf_of: connectedAccountId,
+                transfer_data: { destination: connectedAccountId },
+              },
+            }
+          : {}),
+        metadata: {
+          fulfillment,
+          items: JSON.stringify([item]),
+          customOrderRequestId: String(customOrder.id),
+          scheduledDate: payload.scheduledDate,
+          scheduledTimeSlot: payload.scheduledTimeSlot,
+          ...(deliveryAddress ? { deliveryAddress } : {}),
+          ...(notes ? { notes } : {}),
         },
-      ],
-      ...(connectedAccountId
-        ? {
-            payment_intent_data: {
-              on_behalf_of: connectedAccountId,
-              transfer_data: { destination: connectedAccountId },
-            },
-          }
-        : {}),
-      metadata: {
-        fulfillment,
-        items: JSON.stringify([item]),
-        customOrderRequestId: String(customOrder.id),
-        scheduledDate: payload.scheduledDate,
-        scheduledTimeSlot: payload.scheduledTimeSlot,
-        ...(deliveryAddress ? { deliveryAddress } : {}),
-        ...(notes ? { notes } : {}),
-      },
-      phone_number_collection: { enabled: true },
-      mode: "payment",
-    });
+        phone_number_collection: { enabled: true },
+        mode: "payment",
+      });
+
+    let session;
+    try {
+      session = await createSession(connectedAccountId !== null);
+    } catch (error) {
+      if (connectedAccountId && isTransferCapabilityError(error)) {
+        session = await createSession(false);
+      } else {
+        throw error;
+      }
+    }
 
     if (!session.client_secret) {
       return NextResponse.json({ error: "Stripe client secret is unavailable." }, { status: 502 });
