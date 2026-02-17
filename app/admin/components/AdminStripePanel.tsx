@@ -332,10 +332,10 @@ export default function AdminStripePanel() {
       {!isLoading && status && !payoutRoutingReady ? (
         <div className="callout-warn p-4 rounded-lg mb-4">
           <p className="font-semibold text-sm text-fh-heading mb-1">
-            Checkout is blocked until Stripe payouts are fully enabled.
+            Stripe payout routing needs attention.
           </p>
           <p className="text-xs text-fh-body mb-3">
-            Customers cannot check out right now. Finish Stripe setup so payments route directly to the owner account.
+            Checkout stays available, but payments may temporarily route through the platform account until Stripe setup is complete.
           </p>
           <button
             type="button"

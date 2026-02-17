@@ -192,19 +192,8 @@ export async function POST(request: Request) {
 
     const notes = normalizeNotes(`Custom order details: ${customOrder.desiredItems}\n${customOrder.requestDetails}`);
 
-    if (!storeSettings.stripeAccountId || !connectedAccountId) {
-      return NextResponse.json(
-        {
-          error:
-            "Payment is temporarily unavailable while payout setup is being completed. Please try again shortly.",
-        },
-        { status: 503 },
-      );
-    }
-
-    let session;
-    try {
-      session = await stripe.checkout.sessions.create({
+    const createSession = (routeToConnectedAccount: boolean) =>
+      stripe.checkout.sessions.create({
         ui_mode: "embedded",
         redirect_on_completion: "never",
         payment_method_types: ["card"],
@@ -220,33 +209,62 @@ export async function POST(request: Request) {
             quantity: 1,
           },
         ],
-        payment_intent_data: {
-          on_behalf_of: connectedAccountId,
-          transfer_data: { destination: connectedAccountId },
-        },
+        ...(routeToConnectedAccount && connectedAccountId
+          ? {
+              payment_intent_data: {
+                on_behalf_of: connectedAccountId,
+                transfer_data: { destination: connectedAccountId },
+              },
+            }
+          : {}),
         metadata: {
           fulfillment,
           items: JSON.stringify([item]),
           customOrderRequestId: String(customOrder.id),
           scheduledDate: payload.scheduledDate,
           scheduledTimeSlot: payload.scheduledTimeSlot,
+          payoutRoutingMode:
+            routeToConnectedAccount && connectedAccountId
+              ? "connected_destination"
+              : "platform_fallback",
           ...(deliveryAddress ? { deliveryAddress } : {}),
           ...(notes ? { notes } : {}),
         },
         phone_number_collection: { enabled: true },
         mode: "payment",
       });
+
+    let session;
+    let usedFallbackRouting = connectedAccountId === null;
+    try {
+      session = await createSession(!usedFallbackRouting);
     } catch (error) {
-      if (isTransferCapabilityError(error)) {
-        return NextResponse.json(
-          {
-            error:
-              "Payment is temporarily unavailable while payout setup is being completed. Please try again shortly.",
-          },
-          { status: 503 },
-        );
+      if (connectedAccountId && isTransferCapabilityError(error)) {
+        usedFallbackRouting = true;
+        session = await createSession(false);
+      } else {
+        throw error;
       }
-      throw error;
+    }
+
+    if (usedFallbackRouting) {
+      await prisma.adminAuditLog
+        .create({
+          data: {
+            action: "custom-order.payout.fallback",
+            entityType: "StoreSettings",
+            entityId: 1,
+            details: JSON.stringify({
+              stripeAccountId: storeSettings.stripeAccountId,
+              reason: connectedAccountId
+                ? "transfer_capability_unavailable"
+                : "connected_account_missing_or_inactive",
+              customOrderRequestId: customOrder.id,
+            }),
+            actorEmail: "system",
+          },
+        })
+        .catch(() => null);
     }
 
     if (!session.client_secret) {
