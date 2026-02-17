@@ -188,6 +188,12 @@ export default function AdminStripePanel() {
     return walletDomains.find((domain) => domain.domainName === hostname) ?? null;
   }, [walletDomainInput, walletDomains]);
 
+  const payoutRoutingReady =
+    !!status?.account.linked &&
+    !!status?.account.chargesEnabled &&
+    !!status?.account.payoutsEnabled &&
+    !!status?.account.detailsSubmitted;
+
   async function handleRegisterWalletDomain() {
     if (walletBusy) return;
 
@@ -321,6 +327,25 @@ export default function AdminStripePanel() {
         <p className="feedback-error text-sm mb-4 p-3 rounded-lg">
           {error}
         </p>
+      ) : null}
+
+      {!isLoading && status && !payoutRoutingReady ? (
+        <div className="callout-warn p-4 rounded-lg mb-4">
+          <p className="font-semibold text-sm text-fh-heading mb-1">
+            Checkout is blocked until Stripe payouts are fully enabled.
+          </p>
+          <p className="text-xs text-fh-body mb-3">
+            Customers cannot check out right now. Finish Stripe setup so payments route directly to the owner account.
+          </p>
+          <button
+            type="button"
+            onClick={handleConnect}
+            disabled={action !== null}
+            className="btn-primary py-2 px-4 text-xs disabled:opacity-50"
+          >
+            {action === "connect" ? "Opening..." : "Complete Stripe Setup"}
+          </button>
+        </div>
       ) : null}
 
       {isLoading && !status ? (
