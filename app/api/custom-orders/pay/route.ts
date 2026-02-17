@@ -192,8 +192,19 @@ export async function POST(request: Request) {
 
     const notes = normalizeNotes(`Custom order details: ${customOrder.desiredItems}\n${customOrder.requestDetails}`);
 
-    const createSession = (routeToConnectedAccount: boolean) =>
-      stripe.checkout.sessions.create({
+    if (!storeSettings.stripeAccountId || !connectedAccountId) {
+      return NextResponse.json(
+        {
+          error:
+            "Payment is temporarily unavailable while payout setup is being completed. Please try again shortly.",
+        },
+        { status: 503 },
+      );
+    }
+
+    let session;
+    try {
+      session = await stripe.checkout.sessions.create({
         ui_mode: "embedded",
         redirect_on_completion: "never",
         payment_method_types: ["card"],
@@ -209,14 +220,10 @@ export async function POST(request: Request) {
             quantity: 1,
           },
         ],
-        ...(routeToConnectedAccount && connectedAccountId
-          ? {
-              payment_intent_data: {
-                on_behalf_of: connectedAccountId,
-                transfer_data: { destination: connectedAccountId },
-              },
-            }
-          : {}),
+        payment_intent_data: {
+          on_behalf_of: connectedAccountId,
+          transfer_data: { destination: connectedAccountId },
+        },
         metadata: {
           fulfillment,
           items: JSON.stringify([item]),
@@ -229,16 +236,17 @@ export async function POST(request: Request) {
         phone_number_collection: { enabled: true },
         mode: "payment",
       });
-
-    let session;
-    try {
-      session = await createSession(connectedAccountId !== null);
     } catch (error) {
-      if (connectedAccountId && isTransferCapabilityError(error)) {
-        session = await createSession(false);
-      } else {
-        throw error;
+      if (isTransferCapabilityError(error)) {
+        return NextResponse.json(
+          {
+            error:
+              "Payment is temporarily unavailable while payout setup is being completed. Please try again shortly.",
+          },
+          { status: 503 },
+        );
       }
+      throw error;
     }
 
     if (!session.client_secret) {

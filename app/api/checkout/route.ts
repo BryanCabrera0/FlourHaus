@@ -298,8 +298,19 @@ export async function POST(request: Request) {
       storeSettings.stripeAccountId,
     );
 
-    const createSession = (routeToConnectedAccount: boolean) =>
-      stripe.checkout.sessions.create({
+    if (!storeSettings.stripeAccountId || !connectedAccountId) {
+      return NextResponse.json(
+        {
+          error:
+            "Checkout is temporarily unavailable while payout setup is being completed. Please try again shortly.",
+        },
+        { status: 503 },
+      );
+    }
+
+    let session;
+    try {
+      session = await stripe.checkout.sessions.create({
         ui_mode: "embedded",
         redirect_on_completion: "never",
         payment_method_types: ["card"],
@@ -313,15 +324,11 @@ export async function POST(request: Request) {
           },
           quantity: item.quantity,
         })),
-        ...(routeToConnectedAccount && connectedAccountId
-          ? {
-              // Route payouts to the connected Stripe account when configured.
-              payment_intent_data: {
-                on_behalf_of: connectedAccountId,
-                transfer_data: { destination: connectedAccountId },
-              },
-            }
-          : {}),
+        // Route payouts to the owner's connected Stripe account.
+        payment_intent_data: {
+          on_behalf_of: connectedAccountId,
+          transfer_data: { destination: connectedAccountId },
+        },
         metadata: {
           fulfillment: payload.fulfillment,
           items: JSON.stringify(normalizedStripeItems),
@@ -333,17 +340,17 @@ export async function POST(request: Request) {
         phone_number_collection: { enabled: true },
         mode: "payment",
       });
-
-    let session;
-    try {
-      session = await createSession(connectedAccountId !== null);
     } catch (error) {
-      if (connectedAccountId && isTransferCapabilityError(error)) {
-        // Fallback to platform checkout so customers can still place orders.
-        session = await createSession(false);
-      } else {
-        throw error;
+      if (isTransferCapabilityError(error)) {
+        return NextResponse.json(
+          {
+            error:
+              "Checkout is temporarily unavailable while payout setup is being completed. Please try again shortly.",
+          },
+          { status: 503 },
+        );
       }
+      throw error;
     }
 
     if (!session.client_secret) {
